@@ -7,9 +7,9 @@ import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  applicationName: "RTT",
-  title: "RTT - Resistance Training Tracker",
-  description: "A simple, mobile-first app to log exercises set-by-set",
+  applicationName: "Healthspan",
+  title: "Healthspan",
+  description: "A simple, mobile-first app to log strength training and healthspan data",
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: "RTT",
+    title: "Healthspan",
     statusBarStyle: "black-translucent",
   },
   formatDetection: {

@@ -36,7 +36,7 @@ export async function searchExercises(query: string, limit = 10): Promise<Exerci
     const supabase = createClient()
 
     // Get exercises matching the query
-    let queryBuilder = supabase
+    const queryBuilder = supabase
         .from('exercises')
         .select('*')
         .eq('is_deleted', false)

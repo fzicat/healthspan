@@ -1,4 +1,4 @@
-# RTT - Resistance Training Tracker
+# Healthspan
 
 A simple, mobile-first web app to log exercises set-by-set. Built for quick data entry at the gym with easy recall of recent performance.
 

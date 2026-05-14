@@ -101,7 +101,7 @@ export function Navigation() {
                         )}
                     </svg>
                 </button>
-                <h1 className="ml-3 text-lg font-semibold text-primary">RTT</h1>
+                <h1 className="ml-3 text-lg font-semibold text-primary">Healthspan</h1>
             </header>
 
             {/* Backdrop */}

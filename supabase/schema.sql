@@ -1,4 +1,4 @@
--- RTT Database Schema for Supabase
+-- Healthspan Database Schema for Supabase
 -- Run this script in the Supabase SQL Editor to create the required tables
 -- Exercises table
 CREATE TABLE IF NOT EXISTS exercises (

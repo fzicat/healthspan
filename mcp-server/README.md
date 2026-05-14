@@ -1,7 +1,7 @@
-# RTT MCP Server
+# Healthspan MCP Server
 
 A small **read-only** [Model Context Protocol](https://modelcontextprotocol.io/) server that
-exposes your Resistance Training Tracker data (exercises, sets, workouts) to a local AI agent —
+exposes your Healthspan data (exercises, sets, workouts) to a local AI agent —
 e.g. a Fitness Coach running inside Claude Code, Hermes, or any other MCP-capable harness.
 
 It talks to your Supabase Postgres directly using the **service role key** and only registers
@@ -45,12 +45,12 @@ even if asked to.
 ```json
 {
   "mcpServers": {
-    "fitness-coach-data": {
+    "healthspan-data": {
       "command": "npx",
       "args": [
         "-y",
         "tsx",
-        "/home/hermes/projects/resistance-training-tracker/mcp-server/src/index.ts"
+        "/home/hermes/projects/healthspan/mcp-server/src/index.ts"
       ]
     }
   }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { WorkoutWithPreview } from '@/types/database'
 import { getAllWorkouts, getOrCreateWorkout } from '@/lib/api/workouts'
@@ -39,11 +39,7 @@ export default function ScheduledWorkoutsPage() {
     const [newDate, setNewDate] = useState('')
     const today = getTodayDate()
 
-    useEffect(() => {
-        loadWorkouts()
-    }, [])
-
-    async function loadWorkouts() {
+    const loadWorkouts = useCallback(async () => {
         try {
             setLoading(true)
             const data = await getAllWorkouts()
@@ -54,13 +50,17 @@ export default function ScheduledWorkoutsPage() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [showToast])
+
+    useEffect(() => {
+        loadWorkouts()
+    }, [loadWorkouts])
 
     async function handleCreateWorkout() {
         if (!newDate) return
 
         try {
-            const workout = await getOrCreateWorkout(newDate)
+            await getOrCreateWorkout(newDate)
             setShowDatePicker(false)
             setNewDate('')
             router.push(`/scheduled/${newDate}`)

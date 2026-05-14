@@ -97,7 +97,7 @@ export default function SettingsPage() {
 
                 {/* App Info */}
                 <div className="text-center text-sm text-muted-foreground pt-4">
-                    <p>RTT - Resistance Training Tracker</p>
+                    <p>Healthspan</p>
                     <p>Version 1.0.0</p>
                 </div>
             </div>

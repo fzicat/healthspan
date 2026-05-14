@@ -1,8 +1,8 @@
-# RTT — Resistance Training Tracker
+# Healthspan
 
-A mobile-first web app for logging resistance training sets at the gym. Built around one core need: **remembering what weight you used last time**.
+A mobile-first web app for logging healthspan data: strength training today, with cardio, sleep, HRV, and nutrition planned next.
 
-No coaching, no analytics dashboards, no social features — just fast set logging with automatic recall of your last performance.
+No social features — just fast logging with automatic recall of your last performance and clean data access for an AI fitness coach.
 
 ## Features
 
@@ -37,8 +37,8 @@ No coaching, no analytics dashboards, no social features — just fast set loggi
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/fzicat/resistance-training-tracker.git
-cd resistance-training-tracker
+git clone https://github.com/fzicat/healthspan.git
+cd healthspan
 ```
 
 ### 2. Install dependencies
@@ -81,16 +81,16 @@ Open [http://localhost:3000](http://localhost:3000) — sign up with email/passw
 
 ### Android (Chrome)
 
-1. Open RTT in Chrome.
+1. Open Healthspan in Chrome.
 2. Tap **Install app** in the address bar or from the 3-dot menu (**Install app** / **Add to Home screen**).
-3. Confirm install. RTT opens in standalone app mode.
+3. Confirm install. Healthspan opens in standalone app mode.
 
 ### iPhone (Safari)
 
-1. Open RTT in Safari.
+1. Open Healthspan in Safari.
 2. Tap **Share** (square with arrow).
 3. Choose **Add to Home Screen** and confirm.
-4. Launch RTT from the home screen for full-screen app behavior.
+4. Launch Healthspan from the home screen for full-screen app behavior.
 
 If the app was already open during a deploy, fully close and reopen it once to load the newest service worker.
 

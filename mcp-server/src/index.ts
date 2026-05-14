@@ -19,7 +19,7 @@ loadDotenv({ path: resolve(__dirname, "../../.env.local") });
 loadDotenv({ path: resolve(__dirname, "../../.env") });
 
 const server = new McpServer({
-  name: "rtt-fitness-coach-data",
+  name: "healthspan-data",
   version: "0.1.0",
 });
 

@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "RTT - Resistance Training Tracker",
-  "short_name": "RTT",
-  "description": "A simple, mobile-first app to log exercises set-by-set",
+  "name": "Healthspan",
+  "short_name": "Healthspan",
+  "description": "A simple, mobile-first app to log strength training and healthspan data",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

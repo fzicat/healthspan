@@ -373,7 +373,6 @@ function AddExerciseModal({ onClose, onSelect }: AddExerciseModalProps) {
 
   useEffect(() => {
     if (query.trim()) {
-      setIsLoading(true)
       searchExercises(query, 3).then(data => {
         setExercises(data)
         setIsLoading(false)
@@ -384,6 +383,13 @@ function AddExerciseModal({ onClose, onSelect }: AddExerciseModalProps) {
       })
     }
   }, [query])
+
+  function handleQueryChange(value: string) {
+    setQuery(value)
+    if (value.trim()) {
+      setIsLoading(true)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-start pt-8 justify-center">
@@ -403,7 +409,7 @@ function AddExerciseModal({ onClose, onSelect }: AddExerciseModalProps) {
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => handleQueryChange(e.target.value)}
             placeholder="Search exercises..."
             autoFocus
             className="w-full px-4 py-3 rounded-lg bg-muted border border-border

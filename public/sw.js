@@ -1,6 +1,6 @@
 const CACHE_VERSION = 'v2';
-const SHELL_CACHE = `rtt-shell-${CACHE_VERSION}`;
-const RUNTIME_CACHE = `rtt-runtime-${CACHE_VERSION}`;
+const SHELL_CACHE = `healthspan-shell-${CACHE_VERSION}`;
+const RUNTIME_CACHE = `healthspan-runtime-${CACHE_VERSION}`;
 
 const APP_SHELL_ASSETS = [
   '/manifest.json',

@@ -46,9 +46,9 @@ export default function LoginPage() {
             <div className="w-full max-w-sm">
                 {/* Logo/Title */}
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-primary mb-2">RTT</h1>
+                    <h1 className="text-4xl font-bold text-primary mb-2">Healthspan</h1>
                     <p className="text-muted-foreground text-sm">
-                        Resistance Training Tracker
+                        Strength training and healthspan logging
                     </p>
                 </div>
 
