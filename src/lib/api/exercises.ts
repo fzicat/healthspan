@@ -1,4 +1,4 @@
-import { Exercise, ExerciseMetrics, ExerciseInsert, ExerciseUpdate } from '@/types/database'
+import { Exercise, ExerciseMetrics, ExerciseInsert, ExerciseUpdate, ExerciseCategory } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 
 // Get all non-deleted exercises
@@ -99,10 +99,11 @@ export async function getMRUExercises(limit = 10): Promise<Exercise[]> {
 // Create a new exercise
 export async function createExercise(
     name: string,
-    metrics: ExerciseMetrics = { weight: true, reps: true, time: false, distance: false, unilateral: false, dual_implements: false }
+    metrics: ExerciseMetrics = { weight: true, reps: true, time: false, distance: false, unilateral: false, dual_implements: false },
+    category: ExerciseCategory = 'strength'
 ): Promise<Exercise> {
     const supabase = createClient()
-    const insert: ExerciseInsert = { name: name.trim(), metrics }
+    const insert: ExerciseInsert = { name: name.trim(), metrics, category }
 
     const { data, error } = await supabase
         .from('exercises')
@@ -117,13 +118,14 @@ export async function createExercise(
 // Update an exercise
 export async function updateExercise(
     id: number,
-    updates: { name?: string; metrics?: ExerciseMetrics }
+    updates: { name?: string; metrics?: ExerciseMetrics; category?: ExerciseCategory }
 ): Promise<Exercise> {
     const supabase = createClient()
     const update: ExerciseUpdate = {}
 
     if (updates.name !== undefined) update.name = updates.name.trim()
     if (updates.metrics !== undefined) update.metrics = updates.metrics
+    if (updates.category !== undefined) update.category = updates.category
 
     const { data, error } = await supabase
         .from('exercises')

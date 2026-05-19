@@ -15,6 +15,8 @@ export type ExerciseMetrics = {
     dual_implements?: boolean
 }
 
+export type ExerciseCategory = 'strength' | 'cardio'
+
 export interface Database {
     public: {
         Tables: {
@@ -23,6 +25,7 @@ export interface Database {
                     id: number
                     name: string
                     metrics: ExerciseMetrics
+                    category: ExerciseCategory
                     is_deleted: boolean
                     created_at: string
                 }
@@ -30,6 +33,7 @@ export interface Database {
                     id?: number
                     name: string
                     metrics?: ExerciseMetrics
+                    category?: ExerciseCategory
                     is_deleted?: boolean
                     created_at?: string
                 }
@@ -37,6 +41,7 @@ export interface Database {
                     id?: number
                     name?: string
                     metrics?: ExerciseMetrics
+                    category?: ExerciseCategory
                     is_deleted?: boolean
                     created_at?: string
                 }
@@ -111,6 +116,41 @@ export interface Database {
                     exercise_id?: number
                     sort_order?: number
                     details?: string | null
+                }
+            }
+            cardio_sessions: {
+                Row: {
+                    id: number
+                    exercise_id: number
+                    date: string
+                    duration_minutes: number
+                    heart_rate_avg: number | null
+                    heart_rate_max: number | null
+                    perceived_intensity: number | null
+                    logged_at: string
+                    is_deleted: boolean
+                }
+                Insert: {
+                    id?: number
+                    exercise_id: number
+                    date: string
+                    duration_minutes: number
+                    heart_rate_avg?: number | null
+                    heart_rate_max?: number | null
+                    perceived_intensity?: number | null
+                    logged_at?: string
+                    is_deleted?: boolean
+                }
+                Update: {
+                    id?: number
+                    exercise_id?: number
+                    date?: string
+                    duration_minutes?: number
+                    heart_rate_avg?: number | null
+                    heart_rate_max?: number | null
+                    perceived_intensity?: number | null
+                    logged_at?: string
+                    is_deleted?: boolean
                 }
             }
             daily_logs: {
@@ -196,6 +236,14 @@ export type WorkoutExerciseUpdate = Database['public']['Tables']['workouts_exerc
 export type DailyLog = Database['public']['Tables']['daily_logs']['Row']
 export type DailyLogInsert = Database['public']['Tables']['daily_logs']['Insert']
 export type DailyLogUpdate = Database['public']['Tables']['daily_logs']['Update']
+
+export type CardioSession = Database['public']['Tables']['cardio_sessions']['Row']
+export type CardioSessionInsert = Database['public']['Tables']['cardio_sessions']['Insert']
+export type CardioSessionUpdate = Database['public']['Tables']['cardio_sessions']['Update']
+
+export type CardioSessionWithExercise = CardioSession & {
+    exercises: Pick<Exercise, 'id' | 'name' | 'category'>
+}
 
 // Extended types with joins
 export type WorkoutExerciseWithExercise = WorkoutExercise & {

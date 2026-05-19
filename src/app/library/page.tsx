@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Exercise, ExerciseMetrics } from '@/types/database'
+import { Exercise, ExerciseMetrics, ExerciseCategory } from '@/types/database'
 import { getExercises, createExercise, updateExercise, deleteExercise } from '@/lib/api/exercises'
 import { useToast } from '@/contexts/ToastContext'
 
@@ -41,9 +41,9 @@ export default function LibraryPage() {
         }
     }, [searchQuery, exercises])
 
-    const handleCreateExercise = async (name: string, metrics: ExerciseMetrics) => {
+    const handleCreateExercise = async (name: string, metrics: ExerciseMetrics, category: ExerciseCategory) => {
         try {
-            await createExercise(name, metrics)
+            await createExercise(name, metrics, category)
             await loadExercises()
             setShowCreateModal(false)
             showToast('Exercise created!', 'success')
@@ -52,9 +52,9 @@ export default function LibraryPage() {
         }
     }
 
-    const handleUpdateExercise = async (id: number, name: string, metrics: ExerciseMetrics) => {
+    const handleUpdateExercise = async (id: number, name: string, metrics: ExerciseMetrics, category: ExerciseCategory) => {
         try {
-            await updateExercise(id, { name, metrics })
+            await updateExercise(id, { name, metrics, category })
             await loadExercises()
             setEditingExercise(null)
             showToast('Exercise updated!', 'success')
@@ -130,7 +130,14 @@ export default function LibraryPage() {
                         <li key={exercise.id}>
                             <div className="bg-card rounded-xl p-4 border border-border flex items-center justify-between">
                                 <div>
-                                    <h3 className="font-medium">{exercise.name}</h3>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-medium">{exercise.name}</h3>
+                                        {exercise.category === 'cardio' && (
+                                            <span className="text-xs px-1.5 py-0.5 rounded border border-primary text-primary">
+                                                cardio
+                                            </span>
+                                        )}
+                                    </div>
                                     <p className="text-sm text-muted-foreground">
                                         {formatMetrics(exercise.metrics)}
                                     </p>
@@ -176,7 +183,7 @@ export default function LibraryPage() {
                 <ExerciseModal
                     exercise={editingExercise}
                     onClose={() => setEditingExercise(null)}
-                    onSave={(name, metrics) => handleUpdateExercise(editingExercise.id, name, metrics)}
+                    onSave={(name, metrics, category) => handleUpdateExercise(editingExercise.id, name, metrics, category)}
                 />
             )}
         </div>
@@ -197,11 +204,12 @@ function formatMetrics(metrics: ExerciseMetrics): string {
 interface ExerciseModalProps {
     exercise?: Exercise
     onClose: () => void
-    onSave: (name: string, metrics: ExerciseMetrics) => Promise<void>
+    onSave: (name: string, metrics: ExerciseMetrics, category: ExerciseCategory) => Promise<void>
 }
 
 function ExerciseModal({ exercise, onClose, onSave }: ExerciseModalProps) {
     const [name, setName] = useState(exercise?.name ?? '')
+    const [category, setCategory] = useState<ExerciseCategory>(exercise?.category ?? 'strength')
     const [metrics, setMetrics] = useState<ExerciseMetrics>(
         exercise?.metrics ?? { weight: true, reps: true, time: false, distance: false, unilateral: false, dual_implements: false }
     )
@@ -213,7 +221,7 @@ function ExerciseModal({ exercise, onClose, onSave }: ExerciseModalProps) {
 
         setIsSaving(true)
         try {
-            await onSave(name, metrics)
+            await onSave(name, metrics, category)
         } finally {
             setIsSaving(false)
         }
@@ -248,6 +256,32 @@ function ExerciseModal({ exercise, onClose, onSave }: ExerciseModalProps) {
                        focus:outline-none focus:ring-2 focus:ring-primary"
                             placeholder="e.g. Bench Press"
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">
+                            Category
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                            {(['strength', 'cardio'] as const).map(c => (
+                                <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => setCategory(c)}
+                                    className={`
+                                        px-4 py-3 rounded-lg border text-sm font-medium
+                                        transition-colors capitalize
+                                        ${category === c
+                                            ? 'border-primary text-primary'
+                                            : 'bg-muted border-border text-muted-foreground'
+                                        }
+                                    `}
+                                    style={category === c ? { backgroundColor: 'rgba(254, 128, 25, 0.2)' } : undefined}
+                                >
+                                    {c}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div>

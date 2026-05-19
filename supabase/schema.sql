@@ -97,3 +97,29 @@ CREATE POLICY "Allow authenticated users full access to workouts" ON workouts FO
 CREATE POLICY "Allow authenticated users full access to workouts_exercises" ON workouts_exercises FOR ALL TO authenticated USING (true) WITH CHECK (true);
 -- For daily_logs
 CREATE POLICY "Allow authenticated users full access to daily_logs" ON daily_logs FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Tag exercises as strength or cardio (default strength so existing rows are unchanged)
+ALTER TABLE exercises
+    ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'strength'
+    CHECK (category IN ('strength', 'cardio'));
+-- Cardio sessions: one row per logged session (multiple per day allowed)
+CREATE TABLE IF NOT EXISTS cardio_sessions (
+    id SERIAL PRIMARY KEY,
+    exercise_id INTEGER NOT NULL REFERENCES exercises(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    duration_minutes INTEGER NOT NULL CHECK (duration_minutes > 0),
+    heart_rate_avg INTEGER CHECK (heart_rate_avg BETWEEN 30 AND 250),
+    heart_rate_max INTEGER CHECK (heart_rate_max BETWEEN 30 AND 250),
+    perceived_intensity INTEGER CHECK (perceived_intensity BETWEEN 1 AND 10),
+    logged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE INDEX IF NOT EXISTS cardio_sessions_date ON cardio_sessions (date DESC, logged_at DESC) WHERE is_deleted = FALSE;
+CREATE INDEX IF NOT EXISTS cardio_sessions_exercise ON cardio_sessions (exercise_id, logged_at DESC) WHERE is_deleted = FALSE;
+ALTER TABLE cardio_sessions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow authenticated users full access to cardio_sessions" ON cardio_sessions FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Seed initial cardio types (skipped if already present via LOWER(name) unique index)
+INSERT INTO exercises (name, category, metrics) VALUES
+    ('Zone 2',             'cardio', '{"weight": false, "reps": false, "time": true, "distance": false, "unilateral": false, "dual_implements": false}'),
+    ('HIIT',               'cardio', '{"weight": false, "reps": false, "time": true, "distance": false, "unilateral": false, "dual_implements": false}'),
+    ('Group Boxing Class', 'cardio', '{"weight": false, "reps": false, "time": true, "distance": false, "unilateral": false, "dual_implements": false}')
+ON CONFLICT DO NOTHING;
