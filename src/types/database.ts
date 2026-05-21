@@ -127,6 +127,7 @@ export interface Database {
                     heart_rate_avg: number | null
                     heart_rate_max: number | null
                     perceived_intensity: number | null
+                    notes: string | null
                     logged_at: string
                     is_deleted: boolean
                 }
@@ -138,6 +139,7 @@ export interface Database {
                     heart_rate_avg?: number | null
                     heart_rate_max?: number | null
                     perceived_intensity?: number | null
+                    notes?: string | null
                     logged_at?: string
                     is_deleted?: boolean
                 }
@@ -149,6 +151,7 @@ export interface Database {
                     heart_rate_avg?: number | null
                     heart_rate_max?: number | null
                     perceived_intensity?: number | null
+                    notes?: string | null
                     logged_at?: string
                     is_deleted?: boolean
                 }

@@ -113,6 +113,7 @@ CREATE TABLE IF NOT EXISTS cardio_sessions (
     logged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
+ALTER TABLE cardio_sessions ADD COLUMN IF NOT EXISTS notes TEXT;
 CREATE INDEX IF NOT EXISTS cardio_sessions_date ON cardio_sessions (date DESC, logged_at DESC) WHERE is_deleted = FALSE;
 CREATE INDEX IF NOT EXISTS cardio_sessions_exercise ON cardio_sessions (exercise_id, logged_at DESC) WHERE is_deleted = FALSE;
 ALTER TABLE cardio_sessions ENABLE ROW LEVEL SECURITY;

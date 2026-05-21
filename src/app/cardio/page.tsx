@@ -18,6 +18,7 @@ type FormState = {
     heartRateAvg: string
     heartRateMax: string
     perceivedIntensity: string
+    notes: string
 }
 
 const EMPTY_FORM: FormState = {
@@ -26,6 +27,7 @@ const EMPTY_FORM: FormState = {
     heartRateAvg: '',
     heartRateMax: '',
     perceivedIntensity: '',
+    notes: '',
 }
 
 function parseInt10(s: string): number | null {
@@ -116,6 +118,7 @@ export default function CardioPage() {
                 heart_rate_avg: parseInt10(form.heartRateAvg),
                 heart_rate_max: parseInt10(form.heartRateMax),
                 perceived_intensity: parseInt10(form.perceivedIntensity),
+                notes: form.notes.trim() === '' ? null : form.notes.trim(),
             })
             setForm(prev => ({
                 ...EMPTY_FORM,
@@ -138,6 +141,7 @@ export default function CardioPage() {
             heartRateAvg: session.heart_rate_avg !== null ? String(session.heart_rate_avg) : '',
             heartRateMax: session.heart_rate_max !== null ? String(session.heart_rate_max) : '',
             perceivedIntensity: session.perceived_intensity !== null ? String(session.perceived_intensity) : '',
+            notes: session.notes ?? '',
         })
     }
 
@@ -163,6 +167,7 @@ export default function CardioPage() {
                 heart_rate_avg: parseInt10(editForm.heartRateAvg),
                 heart_rate_max: parseInt10(editForm.heartRateMax),
                 perceived_intensity: parseInt10(editForm.perceivedIntensity),
+                notes: editForm.notes.trim() === '' ? null : editForm.notes.trim(),
             })
             cancelEdit()
             showToast('Session updated', 'success')
@@ -185,11 +190,11 @@ export default function CardioPage() {
         }
     }
 
-    const handleField = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleField = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         setForm(prev => ({ ...prev, [key]: e.target.value }))
     }
 
-    const handleEditField = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleEditField = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         setEditForm(prev => ({ ...prev, [key]: e.target.value }))
     }
 
@@ -279,6 +284,16 @@ export default function CardioPage() {
                     min={1}
                     max={10}
                 />
+                <div className="bg-card rounded-xl p-4 border border-border">
+                    <label className="block text-sm font-medium mb-2" htmlFor="cardio-notes">Comments</label>
+                    <textarea
+                        id="cardio-notes"
+                        value={form.notes}
+                        onChange={handleField('notes')}
+                        rows={3}
+                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-base resize-y"
+                    />
+                </div>
 
                 <button
                     type="button"
@@ -343,6 +358,15 @@ export default function CardioPage() {
                                         min={1}
                                         max={10}
                                     />
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Comments</label>
+                                        <textarea
+                                            value={editForm.notes}
+                                            onChange={handleEditField('notes')}
+                                            rows={3}
+                                            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-base resize-y"
+                                        />
+                                    </div>
                                     <div className="flex gap-2">
                                         <button
                                             type="button"
@@ -371,6 +395,9 @@ export default function CardioPage() {
                                             {session.heart_rate_max !== null && ` • max ${session.heart_rate_max}`}
                                             {session.perceived_intensity !== null && ` • RPE ${session.perceived_intensity}`}
                                         </p>
+                                        {session.notes && (
+                                            <p className="text-sm mt-2 whitespace-pre-wrap">{session.notes}</p>
+                                        )}
                                     </div>
                                     <div className="flex gap-1 shrink-0">
                                         <button
