@@ -373,7 +373,7 @@ function AddExerciseModal({ onClose, onSelect }: AddExerciseModalProps) {
 
   useEffect(() => {
     if (query.trim()) {
-      searchExercises(query, 3).then(data => {
+      searchExercises(query, 10).then(data => {
         setExercises(data)
         setIsLoading(false)
       })
