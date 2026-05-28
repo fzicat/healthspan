@@ -27,7 +27,7 @@ function formatSleep(minutes: number | null): string | null {
     const m = minutes % 60
     if (h === 0) return `${m}m`
     if (m === 0) return `${h}h`
-    return `${h}h ${m}m`
+    return `${h}h${m}m`
 }
 
 export default function WelcomePage() {
@@ -64,43 +64,35 @@ export default function WelcomePage() {
         load()
     }, [load])
 
-    const today = new Date()
-    const todayLabel = today.toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'short',
-        day: 'numeric',
-    })
-
-    return (
-        <div className="max-w-md mx-auto py-6">
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold">Welcome</h1>
-                <p className="text-sm text-muted-foreground">{todayLabel}</p>
-            </div>
-
-            {isLoading ? (
+    if (isLoading) {
+        return (
+            <div className="max-w-md mx-auto py-6">
                 <div className="flex justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
                 </div>
-            ) : (
-                <div className="space-y-3">
-                    <Card href="/morning" title="Morning check-in" subtitle="Today">
-                        <MorningSummary log={morning} />
-                    </Card>
+            </div>
+        )
+    }
 
-                    <Card href="/evening" title="Evening check-in" subtitle="Yesterday">
-                        <EveningSummary log={evening} />
-                    </Card>
+    return (
+        <div className="max-w-md mx-auto py-6">
+            <div className="grid grid-cols-2 gap-3 auto-rows-fr">
+                <Card href="/morning" title="Morning" subtitle="Today" color="var(--yellow)">
+                    <MorningSummary log={morning} />
+                </Card>
 
-                    <Card href="/cardio" title="Cardio" subtitle="Today">
-                        <CardioSummary sessions={cardio} />
-                    </Card>
+                <Card href="/evening" title="Evening" subtitle="Yesterday" color="var(--purple)">
+                    <EveningSummary log={evening} />
+                </Card>
 
-                    <Card href="/strength" title="Strength" subtitle="Today">
-                        <LiftingSummary exercises={lifting} />
-                    </Card>
-                </div>
-            )}
+                <Card href="/cardio" title="Cardio" subtitle="Today" color="var(--red)">
+                    <CardioSummary sessions={cardio} />
+                </Card>
+
+                <Card href="/strength" title="Strength" subtitle="Today" color="var(--aqua)">
+                    <LiftingSummary exercises={lifting} />
+                </Card>
+            </div>
         </div>
     )
 }
@@ -109,44 +101,39 @@ function Card({
     href,
     title,
     subtitle,
+    color,
     children,
 }: {
     href: string
     title: string
     subtitle: string
+    color: string
     children: React.ReactNode
 }) {
     return (
         <Link
             href={href}
-            className="block bg-card rounded-xl p-4 border border-border
-                       hover:bg-muted transition-colors"
+            className="flex flex-col bg-card rounded-xl p-3 border hover:bg-muted transition-colors h-full"
+            style={{ borderColor: color }}
         >
-            <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2">
-                        <h2 className="font-semibold text-lg">{title}</h2>
-                        <span className="text-xs text-muted-foreground">{subtitle}</span>
-                    </div>
-                    <div className="mt-2">{children}</div>
-                </div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground shrink-0 mt-1">
-                    <polyline points="9 18 15 12 9 6" />
-                </svg>
+            <div className="flex items-baseline justify-between gap-2 mb-2 pb-1.5 border-b" style={{ borderColor: color }}>
+                <h2 className="font-semibold text-base leading-tight" style={{ color }}>{title}</h2>
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{subtitle}</span>
             </div>
+            <div className="flex-1">{children}</div>
         </Link>
     )
 }
 
 function Empty({ text }: { text: string }) {
-    return <p className="text-sm text-muted-foreground">{text}</p>
+    return <p className="text-xs text-muted-foreground italic">{text}</p>
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Row({ label, value }: { label: string; value: string }) {
     return (
-        <div>
-            <div className="text-xs text-muted-foreground">{label}</div>
-            <div className="text-sm font-medium">{value}</div>
+        <div className="flex items-baseline justify-between gap-2 text-xs">
+            <span className="text-muted-foreground truncate">{label}</span>
+            <span className="font-medium tabular-nums shrink-0">{value}</span>
         </div>
     )
 }
@@ -157,16 +144,16 @@ function MorningSummary({ log }: { log: DailyLog | null }) {
     if (log.weight_lbs !== null) items.push({ label: 'Weight', value: `${log.weight_lbs} lbs` })
     const sleep = formatSleep(log.sleep_duration_minutes)
     if (sleep) items.push({ label: 'Sleep', value: sleep })
-    if (log.sleep_score !== null) items.push({ label: 'Sleep score', value: `${log.sleep_score}` })
-    if (log.sleep_hrv_rmssd !== null) items.push({ label: 'Sleep HRV', value: `${log.sleep_hrv_rmssd} ms` })
-    if (log.morning_hrv_rmssd !== null) items.push({ label: 'Morning HRV', value: `${log.morning_hrv_rmssd} ms` })
+    if (log.sleep_score !== null) items.push({ label: 'Score', value: `${log.sleep_score}` })
+    if (log.sleep_hrv_rmssd !== null) items.push({ label: 'Sleep HRV', value: `${log.sleep_hrv_rmssd}` })
+    if (log.morning_hrv_rmssd !== null) items.push({ label: 'AM HRV', value: `${log.morning_hrv_rmssd}` })
 
     if (items.length === 0) return <Empty text="Not logged yet" />
 
     return (
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+        <div className="space-y-0.5">
             {items.map(item => (
-                <Stat key={item.label} label={item.label} value={item.value} />
+                <Row key={item.label} label={item.label} value={item.value} />
             ))}
         </div>
     )
@@ -175,32 +162,32 @@ function MorningSummary({ log }: { log: DailyLog | null }) {
 function EveningSummary({ log }: { log: DailyLog | null }) {
     if (!log) return <Empty text="Not logged" />
     const items: { label: string; value: string }[] = []
-    if (log.calories !== null) items.push({ label: 'Calories', value: `${log.calories} kcal` })
-    if (log.protein_g !== null) items.push({ label: 'Protein', value: `${log.protein_g} g` })
-    if (log.carbs_g !== null) items.push({ label: 'Carbs', value: `${log.carbs_g} g` })
-    if (log.fat_g !== null) items.push({ label: 'Fat', value: `${log.fat_g} g` })
-    if (log.alcohol_g !== null) items.push({ label: 'Alcohol', value: `${log.alcohol_g} g` })
+    if (log.calories !== null) items.push({ label: 'Calories', value: `${log.calories}` })
+    if (log.protein_g !== null) items.push({ label: 'Protein', value: `${log.protein_g}g` })
+    if (log.carbs_g !== null) items.push({ label: 'Carbs', value: `${log.carbs_g}g` })
+    if (log.fat_g !== null) items.push({ label: 'Fat', value: `${log.fat_g}g` })
+    if (log.alcohol_g !== null) items.push({ label: 'Alcohol', value: `${log.alcohol_g}g` })
     if (log.steps !== null) items.push({ label: 'Steps', value: `${log.steps}` })
 
     if (items.length === 0) return <Empty text="Not logged" />
 
     return (
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+        <div className="space-y-0.5">
             {items.map(item => (
-                <Stat key={item.label} label={item.label} value={item.value} />
+                <Row key={item.label} label={item.label} value={item.value} />
             ))}
         </div>
     )
 }
 
 function CardioSummary({ sessions }: { sessions: CardioSessionWithExercise[] }) {
-    if (sessions.length === 0) return <Empty text="No cardio sessions" />
+    if (sessions.length === 0) return <Empty text="No sessions" />
     return (
-        <ul className="space-y-1">
+        <ul className="space-y-0.5">
             {sessions.map(session => (
-                <li key={session.id} className="text-sm">
-                    <span className="font-medium">{session.exercises?.name ?? 'Cardio'}</span>
-                    <span className="text-muted-foreground"> · {session.duration_minutes} min</span>
+                <li key={session.id} className="flex items-baseline justify-between gap-2 text-xs">
+                    <span className="font-medium truncate">{session.exercises?.name ?? 'Cardio'}</span>
+                    <span className="text-muted-foreground tabular-nums shrink-0">{session.duration_minutes}m</span>
                 </li>
             ))}
         </ul>
@@ -208,15 +195,12 @@ function CardioSummary({ sessions }: { sessions: CardioSessionWithExercise[] }) 
 }
 
 function LiftingSummary({ exercises }: { exercises: WorkoutExerciseWithExercise[] }) {
-    if (exercises.length === 0) return <Empty text="No exercises planned" />
+    if (exercises.length === 0) return <Empty text="No exercises" />
     return (
-        <ul className="space-y-1">
+        <ul className="space-y-0.5">
             {exercises.map(we => (
-                <li key={we.id} className="text-sm">
-                    <span className="font-medium">{we.exercises.name}</span>
-                    {we.details && (
-                        <span className="text-muted-foreground"> · {we.details}</span>
-                    )}
+                <li key={we.id} className="text-xs font-medium truncate">
+                    {we.exercises.name}
                 </li>
             ))}
         </ul>
