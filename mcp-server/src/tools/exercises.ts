@@ -2,6 +2,7 @@ import { getSupabase } from "../supabase.ts";
 
 export async function searchExercises(args: {
   query?: string;
+  category?: "strength" | "cardio";
   limit?: number;
 }) {
   const supabase = getSupabase();
@@ -9,7 +10,7 @@ export async function searchExercises(args: {
 
   let q = supabase
     .from("exercises")
-    .select("id, name, metrics, created_at")
+    .select("id, name, category, metrics, created_at")
     .eq("is_deleted", false)
     .order("name", { ascending: true })
     .limit(limit);
@@ -17,6 +18,7 @@ export async function searchExercises(args: {
   if (args.query && args.query.trim().length > 0) {
     q = q.ilike("name", `%${args.query.trim()}%`);
   }
+  if (args.category) q = q.eq("category", args.category);
 
   const { data, error } = await q;
   if (error) throw error;

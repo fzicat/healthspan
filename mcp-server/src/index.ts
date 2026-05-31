@@ -14,6 +14,7 @@ import {
   listRecentWorkouts,
 } from "./tools/workouts.ts";
 import { getDailyLog, listDailyLogs } from "./tools/daily-logs.ts";
+import { listCardioSessions } from "./tools/cardio.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 loadDotenv({ path: resolve(__dirname, "../../.env.local") });
@@ -43,10 +44,15 @@ server.registerTool(
         .string()
         .optional()
         .describe("Optional substring to match against exercise name."),
+      category: z
+        .enum(["strength", "cardio"])
+        .optional()
+        .describe("Filter by exercise category."),
       limit: z.number().int().min(1).max(200).optional(),
     },
   },
-  async ({ query, limit }) => json(await searchExercises({ query, limit }))
+  async ({ query, category, limit }) =>
+    json(await searchExercises({ query, category, limit }))
 );
 
 server.registerTool(
@@ -181,6 +187,30 @@ server.registerTool(
   },
   async ({ from, to, limit }) =>
     json(await listDailyLogs({ from, to, limit }))
+);
+
+server.registerTool(
+  "list_cardio_sessions",
+  {
+    title: "List cardio sessions",
+    description:
+      "Time-series of cardio sessions (most recent first), each with the cardio exercise name. " +
+      "Each session has duration_minutes, optional heart_rate_avg/max, perceived_intensity (1-10), and notes. " +
+      "Filter by exercise_id (resolve via search_exercises with category='cardio') and/or date range.",
+    inputSchema: {
+      exercise_id: z.number().int().positive().optional(),
+      from: z
+        .string()
+        .optional()
+        .describe("ISO date (YYYY-MM-DD). Only include sessions on or after this date."),
+      to: z
+        .string()
+        .optional()
+        .describe("ISO date (YYYY-MM-DD). Only include sessions on or before this date."),
+      limit: z.number().int().min(1).max(500).optional(),
+    },
+  },
+  async (args) => json(await listCardioSessions(args))
 );
 
 const transport = new StdioServerTransport();

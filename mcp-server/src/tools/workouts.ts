@@ -1,4 +1,5 @@
 import { getSupabase } from "../supabase.ts";
+import { getCardioSessionsByDate } from "./cardio.ts";
 
 type WorkoutRow = { id: number; date: string };
 type ExerciseRow = {
@@ -73,6 +74,8 @@ export async function listRecentWorkouts(args: {
 export async function getWorkoutByDate(args: { date: string }) {
   const supabase = getSupabase();
 
+  const cardio_sessions = await getCardioSessionsByDate({ date: args.date });
+
   const { data: workout, error: wErr } = await supabase
     .from("workouts")
     .select("id, date")
@@ -80,7 +83,16 @@ export async function getWorkoutByDate(args: { date: string }) {
     .maybeSingle();
 
   if (wErr) throw wErr;
-  if (!workout) return null;
+  if (!workout) {
+    if (cardio_sessions.length === 0) return null;
+    return {
+      id: null,
+      date: args.date,
+      planned_exercises: [],
+      logged_sets: [],
+      cardio_sessions,
+    };
+  }
 
   const w = workout as unknown as WorkoutRow;
 
@@ -116,6 +128,7 @@ export async function getWorkoutByDate(args: { date: string }) {
     date: w.date,
     planned_exercises: (planned ?? []) as unknown as WorkoutExerciseJoined[],
     logged_sets: (sets ?? []) as unknown as SetJoined[],
+    cardio_sessions,
   };
 }
 
