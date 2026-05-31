@@ -20,14 +20,10 @@ export async function getWorkoutForDate(date: string): Promise<{
         .from('workouts')
         .select('*')
         .eq('date', date)
-        .single()
+        .maybeSingle()
 
-    if (workoutError) {
-        if (workoutError.code === 'PGRST116') {
-            return { workout: null, exercises: [] }
-        }
-        throw workoutError
-    }
+    if (workoutError) throw workoutError
+    if (!workout) return { workout: null, exercises: [] }
 
     // Get exercises for this workout
     const { data: exercises, error: exercisesError } = await supabase

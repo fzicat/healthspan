@@ -12,13 +12,22 @@ import {
     WorkoutExerciseWithExercise,
 } from '@/types/database'
 
-function getYesterdayDate(): string {
-    const d = new Date()
-    d.setDate(d.getDate() - 1)
-    const year = d.getFullYear()
-    const month = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
+function shiftDate(dateStr: string, days: number): string {
+    const [y, m, d] = dateStr.split('-').map(Number)
+    const dt = new Date(y, m - 1, d)
+    dt.setDate(dt.getDate() + days)
+    const year = dt.getFullYear()
+    const month = String(dt.getMonth() + 1).padStart(2, '0')
+    const day = String(dt.getDate()).padStart(2, '0')
     return `${year}-${month}-${day}`
+}
+
+function formatDateLabel(dateStr: string): string {
+    const today = getTodayDate()
+    if (dateStr === today) return 'Today'
+    if (dateStr === shiftDate(today, -1)) return 'Yesterday'
+    if (dateStr === shiftDate(today, 1)) return 'Tomorrow'
+    return dateStr
 }
 
 function formatSleep(minutes: number | null): string | null {
@@ -31,6 +40,7 @@ function formatSleep(minutes: number | null): string | null {
 }
 
 export default function WelcomePage() {
+    const [date, setDate] = useState(getTodayDate())
     const [morning, setMorning] = useState<DailyLog | null>(null)
     const [evening, setEvening] = useState<DailyLog | null>(null)
     const [cardio, setCardio] = useState<CardioSessionWithExercise[]>([])
@@ -40,14 +50,13 @@ export default function WelcomePage() {
 
     const load = useCallback(async () => {
         setIsLoading(true)
-        const today = getTodayDate()
-        const yesterday = getYesterdayDate()
+        const previous = shiftDate(date, -1)
         try {
             const [morningLog, eveningLog, cardioSessions, workout] = await Promise.all([
-                getDailyLog(today),
-                getDailyLog(yesterday),
-                getCardioSessionsForDate(today),
-                getWorkoutForDate(today),
+                getDailyLog(date),
+                getDailyLog(previous),
+                getCardioSessionsForDate(date),
+                getWorkoutForDate(date),
             ])
             setMorning(morningLog)
             setEvening(eveningLog)
@@ -58,41 +67,67 @@ export default function WelcomePage() {
         } finally {
             setIsLoading(false)
         }
-    }, [showToast])
+    }, [date, showToast])
 
     useEffect(() => {
         load()
     }, [load])
 
-    if (isLoading) {
-        return (
-            <div className="max-w-md mx-auto py-6">
-                <div className="flex justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
-                </div>
-            </div>
-        )
-    }
+    const previousLabel = formatDateLabel(shiftDate(date, -1))
 
     return (
         <div className="max-w-md mx-auto py-6">
-            <div className="grid grid-cols-2 gap-3 auto-rows-fr">
-                <Card href="/morning" title="Morning" subtitle="Today" color="var(--yellow)">
-                    <MorningSummary log={morning} />
-                </Card>
-
-                <Card href="/evening" title="Evening" subtitle="Yesterday" color="var(--purple)">
-                    <EveningSummary log={evening} />
-                </Card>
-
-                <Card href="/cardio" title="Cardio" subtitle="Today" color="var(--red)">
-                    <CardioSummary sessions={cardio} />
-                </Card>
-
-                <Card href="/strength" title="Strength" subtitle="Today" color="var(--aqua)">
-                    <LiftingSummary exercises={lifting} />
-                </Card>
+            <div className="flex items-center justify-center gap-3 mb-4">
+                <button
+                    type="button"
+                    onClick={() => setDate(shiftDate(date, -1))}
+                    className="p-2 rounded-lg hover:bg-muted transition-colors"
+                    style={{ color: 'var(--orange)' }}
+                    aria-label="Previous day"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                </button>
+                <span className="text-lg font-semibold tabular-nums min-w-[7rem] text-center">
+                    {formatDateLabel(date)}
+                </span>
+                <button
+                    type="button"
+                    onClick={() => setDate(shiftDate(date, 1))}
+                    className="p-2 rounded-lg hover:bg-muted transition-colors"
+                    style={{ color: 'var(--orange)' }}
+                    aria-label="Next day"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="9 6 15 12 9 18" />
+                    </svg>
+                </button>
             </div>
+
+            {isLoading ? (
+                <div className="flex justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+                </div>
+            ) : (
+                <div className="grid grid-cols-2 gap-3 auto-rows-fr">
+                    <Card href="/morning" title="Morning" subtitle={formatDateLabel(date)} color="var(--yellow)">
+                        <MorningSummary log={morning} />
+                    </Card>
+
+                    <Card href="/evening" title="Evening" subtitle={previousLabel} color="var(--purple)">
+                        <EveningSummary log={evening} />
+                    </Card>
+
+                    <Card href="/cardio" title="Cardio" subtitle={formatDateLabel(date)} color="var(--red)">
+                        <CardioSummary sessions={cardio} />
+                    </Card>
+
+                    <Card href="/strength" title="Strength" subtitle={formatDateLabel(date)} color="var(--aqua)">
+                        <LiftingSummary exercises={lifting} />
+                    </Card>
+                </div>
+            )}
         </div>
     )
 }
