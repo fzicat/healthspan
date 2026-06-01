@@ -4,11 +4,13 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { getDailyLog, getTodayDate } from '@/lib/api/daily-logs'
 import { getCardioSessionsForDate } from '@/lib/api/cardio'
+import { getBreathworkSessionsForDate } from '@/lib/api/breathwork'
 import { getWorkoutForDate } from '@/lib/api/workouts'
 import { useToast } from '@/contexts/ToastContext'
 import {
     DailyLog,
     CardioSessionWithExercise,
+    BreathworkSession,
     WorkoutExerciseWithExercise,
 } from '@/types/database'
 
@@ -44,6 +46,7 @@ export default function WelcomePage() {
     const [morning, setMorning] = useState<DailyLog | null>(null)
     const [evening, setEvening] = useState<DailyLog | null>(null)
     const [cardio, setCardio] = useState<CardioSessionWithExercise[]>([])
+    const [breathwork, setBreathwork] = useState<BreathworkSession[]>([])
     const [lifting, setLifting] = useState<WorkoutExerciseWithExercise[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const { showToast } = useToast()
@@ -52,15 +55,17 @@ export default function WelcomePage() {
         setIsLoading(true)
         const previous = shiftDate(date, -1)
         try {
-            const [morningLog, eveningLog, cardioSessions, workout] = await Promise.all([
+            const [morningLog, eveningLog, cardioSessions, breathworkSessions, workout] = await Promise.all([
                 getDailyLog(date),
                 getDailyLog(previous),
                 getCardioSessionsForDate(date),
+                getBreathworkSessionsForDate(date),
                 getWorkoutForDate(date),
             ])
             setMorning(morningLog)
             setEvening(eveningLog)
             setCardio(cardioSessions)
+            setBreathwork(breathworkSessions)
             setLifting(workout.exercises)
         } catch {
             showToast('Failed to load summary', 'error')
@@ -125,6 +130,10 @@ export default function WelcomePage() {
 
                     <Card href="/strength" title="Strength" subtitle={formatDateLabel(date)} color="var(--aqua)">
                         <LiftingSummary exercises={lifting} />
+                    </Card>
+
+                    <Card href="/breathwork" title="Breathwork" subtitle={formatDateLabel(date)} color="var(--blue)">
+                        <BreathworkSummary sessions={breathwork} />
                     </Card>
                 </div>
             )}
@@ -222,6 +231,22 @@ function CardioSummary({ sessions }: { sessions: CardioSessionWithExercise[] }) 
             {sessions.map(session => (
                 <li key={session.id} className="flex items-baseline justify-between gap-2 text-xs">
                     <span className="font-medium truncate">{session.exercises?.name ?? 'Cardio'}</span>
+                    <span className="text-muted-foreground tabular-nums shrink-0">{session.duration_minutes}m</span>
+                </li>
+            ))}
+        </ul>
+    )
+}
+
+function BreathworkSummary({ sessions }: { sessions: BreathworkSession[] }) {
+    if (sessions.length === 0) return <Empty text="No sessions" />
+    return (
+        <ul className="space-y-0.5">
+            {sessions.map(session => (
+                <li key={session.id} className="flex items-baseline justify-between gap-2 text-xs">
+                    <span className="font-medium truncate">
+                        {session.type}{session.sauna && ' • sauna'}
+                    </span>
                     <span className="text-muted-foreground tabular-nums shrink-0">{session.duration_minutes}m</span>
                 </li>
             ))}

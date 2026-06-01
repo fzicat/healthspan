@@ -124,3 +124,18 @@ INSERT INTO exercises (name, category, metrics) VALUES
     ('HIIT',               'cardio', '{"weight": false, "reps": false, "time": true, "distance": false, "unilateral": false, "dual_implements": false}'),
     ('Group Boxing Class', 'cardio', '{"weight": false, "reps": false, "time": true, "distance": false, "unilateral": false, "dual_implements": false}')
 ON CONFLICT DO NOTHING;
+-- Breathwork sessions: one row per logged session (multiple per day allowed)
+CREATE TABLE IF NOT EXISTS breathwork_sessions (
+    id SERIAL PRIMARY KEY,
+    date DATE NOT NULL,
+    time TIME,
+    duration_minutes INTEGER NOT NULL CHECK (duration_minutes > 0),
+    sauna BOOLEAN NOT NULL DEFAULT FALSE,
+    type TEXT NOT NULL DEFAULT 'Resonance Breathing',
+    comments TEXT,
+    logged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE INDEX IF NOT EXISTS breathwork_sessions_date ON breathwork_sessions (date DESC, logged_at DESC) WHERE is_deleted = FALSE;
+ALTER TABLE breathwork_sessions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow authenticated users full access to breathwork_sessions" ON breathwork_sessions FOR ALL TO authenticated USING (true) WITH CHECK (true);

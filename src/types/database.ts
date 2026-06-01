@@ -156,6 +156,41 @@ export interface Database {
                     is_deleted?: boolean
                 }
             }
+            breathwork_sessions: {
+                Row: {
+                    id: number
+                    date: string
+                    time: string | null
+                    duration_minutes: number
+                    sauna: boolean
+                    type: string
+                    comments: string | null
+                    logged_at: string
+                    is_deleted: boolean
+                }
+                Insert: {
+                    id?: number
+                    date: string
+                    time?: string | null
+                    duration_minutes: number
+                    sauna?: boolean
+                    type?: string
+                    comments?: string | null
+                    logged_at?: string
+                    is_deleted?: boolean
+                }
+                Update: {
+                    id?: number
+                    date?: string
+                    time?: string | null
+                    duration_minutes?: number
+                    sauna?: boolean
+                    type?: string
+                    comments?: string | null
+                    logged_at?: string
+                    is_deleted?: boolean
+                }
+            }
             daily_logs: {
                 Row: {
                     date: string
@@ -243,6 +278,13 @@ export type DailyLogUpdate = Database['public']['Tables']['daily_logs']['Update'
 export type CardioSession = Database['public']['Tables']['cardio_sessions']['Row']
 export type CardioSessionInsert = Database['public']['Tables']['cardio_sessions']['Insert']
 export type CardioSessionUpdate = Database['public']['Tables']['cardio_sessions']['Update']
+
+export type BreathworkSession = Database['public']['Tables']['breathwork_sessions']['Row']
+export type BreathworkSessionInsert = Database['public']['Tables']['breathwork_sessions']['Insert']
+export type BreathworkSessionUpdate = Database['public']['Tables']['breathwork_sessions']['Update']
+
+export const BREATHWORK_TYPES = ['Resonance Breathing'] as const
+export type BreathworkType = typeof BREATHWORK_TYPES[number]
 
 export type CardioSessionWithExercise = CardioSession & {
     exercises: Pick<Exercise, 'id' | 'name' | 'category'>

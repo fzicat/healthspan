@@ -15,6 +15,7 @@ import {
 } from "./tools/workouts.ts";
 import { getDailyLog, listDailyLogs } from "./tools/daily-logs.ts";
 import { listCardioSessions } from "./tools/cardio.ts";
+import { listBreathworkSessions } from "./tools/breathwork.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 loadDotenv({ path: resolve(__dirname, "../../.env.local") });
@@ -211,6 +212,37 @@ server.registerTool(
     },
   },
   async (args) => json(await listCardioSessions(args))
+);
+
+server.registerTool(
+  "list_breathwork_sessions",
+  {
+    title: "List breathwork sessions",
+    description:
+      "Time-series of breathwork sessions (most recent first). Each session has a type " +
+      "(e.g., 'Resonance Breathing'), duration_minutes, sauna flag (true if performed in a sauna), " +
+      "optional time of day, and optional comments. Filter by type, sauna, and/or date range.",
+    inputSchema: {
+      type: z
+        .string()
+        .optional()
+        .describe("Filter by breathwork type (e.g., 'Resonance Breathing')."),
+      sauna: z
+        .boolean()
+        .optional()
+        .describe("Filter to sessions performed in a sauna (true) or not (false)."),
+      from: z
+        .string()
+        .optional()
+        .describe("ISO date (YYYY-MM-DD). Only include sessions on or after this date."),
+      to: z
+        .string()
+        .optional()
+        .describe("ISO date (YYYY-MM-DD). Only include sessions on or before this date."),
+      limit: z.number().int().min(1).max(500).optional(),
+    },
+  },
+  async (args) => json(await listBreathworkSessions(args))
 );
 
 const transport = new StdioServerTransport();
