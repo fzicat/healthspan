@@ -136,6 +136,8 @@ CREATE TABLE IF NOT EXISTS breathwork_sessions (
     logged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
+-- Heart rate measured at the end of the session (bpm)
+ALTER TABLE breathwork_sessions ADD COLUMN IF NOT EXISTS heart_rate_end INTEGER CHECK (heart_rate_end BETWEEN 30 AND 250);
 CREATE INDEX IF NOT EXISTS breathwork_sessions_date ON breathwork_sessions (date DESC, logged_at DESC) WHERE is_deleted = FALSE;
 ALTER TABLE breathwork_sessions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow authenticated users full access to breathwork_sessions" ON breathwork_sessions FOR ALL TO authenticated USING (true) WITH CHECK (true);

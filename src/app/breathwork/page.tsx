@@ -16,6 +16,7 @@ type FormState = {
     durationMinutes: string
     sauna: boolean
     type: string
+    heartRateEnd: string
     comments: string
 }
 
@@ -24,6 +25,7 @@ const EMPTY_FORM: FormState = {
     durationMinutes: '',
     sauna: false,
     type: BREATHWORK_TYPES[0],
+    heartRateEnd: '',
     comments: '',
 }
 
@@ -99,6 +101,7 @@ export default function BreathworkPage() {
                 duration_minutes: duration,
                 sauna: form.sauna,
                 type: form.type,
+                heart_rate_end: parseInt10(form.heartRateEnd),
                 comments: form.comments.trim() === '' ? null : form.comments.trim(),
             })
             setForm(EMPTY_FORM)
@@ -118,6 +121,7 @@ export default function BreathworkPage() {
             durationMinutes: String(session.duration_minutes),
             sauna: session.sauna,
             type: session.type,
+            heartRateEnd: session.heart_rate_end === null ? '' : String(session.heart_rate_end),
             comments: session.comments ?? '',
         })
     }
@@ -143,6 +147,7 @@ export default function BreathworkPage() {
                 duration_minutes: duration,
                 sauna: editForm.sauna,
                 type: editForm.type,
+                heart_rate_end: parseInt10(editForm.heartRateEnd),
                 comments: editForm.comments.trim() === '' ? null : editForm.comments.trim(),
             })
             cancelEdit()
@@ -251,6 +256,15 @@ export default function BreathworkPage() {
                     </label>
                 </div>
 
+                <NumberField
+                    label="Heart rate (end of session)"
+                    suffix="bpm"
+                    value={form.heartRateEnd}
+                    onChange={e => setForm(prev => ({ ...prev, heartRateEnd: e.target.value }))}
+                    min={30}
+                    max={250}
+                />
+
                 <div className="bg-card rounded-xl p-4 border border-border">
                     <label className="block text-sm font-medium mb-2" htmlFor="bw-comments">Comments</label>
                     <textarea
@@ -319,6 +333,14 @@ export default function BreathworkPage() {
                                         />
                                         Sauna
                                     </label>
+                                    <NumberField
+                                        label="Heart rate (end of session)"
+                                        suffix="bpm"
+                                        value={editForm.heartRateEnd}
+                                        onChange={e => setEditForm(prev => ({ ...prev, heartRateEnd: e.target.value }))}
+                                        min={30}
+                                        max={250}
+                                    />
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Comments</label>
                                         <textarea
@@ -354,6 +376,7 @@ export default function BreathworkPage() {
                                             {session.duration_minutes} min
                                             {session.time && ` • ${formatTime(session.time)}`}
                                             {session.sauna && ' • sauna'}
+                                            {session.heart_rate_end !== null && ` • ${session.heart_rate_end} bpm`}
                                         </p>
                                         {session.comments && (
                                             <p className="text-sm mt-2 whitespace-pre-wrap">{session.comments}</p>

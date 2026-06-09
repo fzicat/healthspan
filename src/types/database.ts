@@ -165,6 +165,7 @@ export interface Database {
                     sauna: boolean
                     type: string
                     comments: string | null
+                    heart_rate_end: number | null
                     logged_at: string
                     is_deleted: boolean
                 }
@@ -176,6 +177,7 @@ export interface Database {
                     sauna?: boolean
                     type?: string
                     comments?: string | null
+                    heart_rate_end?: number | null
                     logged_at?: string
                     is_deleted?: boolean
                 }
@@ -187,6 +189,7 @@ export interface Database {
                     sauna?: boolean
                     type?: string
                     comments?: string | null
+                    heart_rate_end?: number | null
                     logged_at?: string
                     is_deleted?: boolean
                 }

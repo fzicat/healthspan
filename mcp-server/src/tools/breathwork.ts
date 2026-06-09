@@ -1,7 +1,7 @@
 import { getSupabase } from "../supabase.ts";
 
 const COLUMNS =
-  "id, date, time, duration_minutes, sauna, type, comments, logged_at";
+  "id, date, time, duration_minutes, sauna, type, comments, heart_rate_end, logged_at";
 
 export async function listBreathworkSessions(args: {
   type?: string;

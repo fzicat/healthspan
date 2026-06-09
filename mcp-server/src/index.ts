@@ -221,7 +221,8 @@ server.registerTool(
     description:
       "Time-series of breathwork sessions (most recent first). Each session has a type " +
       "(e.g., 'Resonance Breathing'), duration_minutes, sauna flag (true if performed in a sauna), " +
-      "optional time of day, and optional comments. Filter by type, sauna, and/or date range.",
+      "optional time of day, optional heart_rate_end (bpm measured at the end of the session), " +
+      "and optional comments. Filter by type, sauna, and/or date range.",
     inputSchema: {
       type: z
         .string()
