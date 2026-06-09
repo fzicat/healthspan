@@ -155,7 +155,9 @@ export function Navigation() {
                         )}
                     </svg>
                 </button>
-                <h1 className="ml-3 text-lg font-semibold text-primary">Healthspan</h1>
+                <Link href="/" onClick={closeMenu} className="ml-3">
+                    <h1 className="text-lg font-semibold text-primary">Healthspan</h1>
+                </Link>
             </header>
 
             {/* Backdrop */}
