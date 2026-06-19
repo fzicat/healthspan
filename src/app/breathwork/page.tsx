@@ -29,6 +29,18 @@ const EMPTY_FORM: FormState = {
     comments: '',
 }
 
+function getCurrentTime(): string {
+    const now = new Date()
+    const hh = String(now.getHours()).padStart(2, '0')
+    const mm = String(now.getMinutes()).padStart(2, '0')
+    return `${hh}:${mm}`
+}
+
+// A fresh form for logging a new session, pre-filled with the current time.
+function newSessionForm(): FormState {
+    return { ...EMPTY_FORM, time: getCurrentTime() }
+}
+
 function parseInt10(s: string): number | null {
     const trimmed = s.trim()
     if (trimmed === '') return null
@@ -55,7 +67,7 @@ function formatTime(value: string | null): string {
 export default function BreathworkPage() {
     const [date, setDate] = useState(getTodayDate())
     const [sessions, setSessions] = useState<BreathworkSession[]>([])
-    const [form, setForm] = useState<FormState>(EMPTY_FORM)
+    const [form, setForm] = useState<FormState>(newSessionForm)
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
     const [editingId, setEditingId] = useState<number | null>(null)
@@ -104,7 +116,7 @@ export default function BreathworkPage() {
                 heart_rate_end: parseInt10(form.heartRateEnd),
                 comments: form.comments.trim() === '' ? null : form.comments.trim(),
             })
-            setForm(EMPTY_FORM)
+            setForm(newSessionForm())
             showToast('Session added', 'success')
             await loadSessions()
         } catch {
@@ -225,17 +237,6 @@ export default function BreathworkPage() {
                     </select>
                 </div>
 
-                <div className="bg-card rounded-xl p-4 border border-border">
-                    <label className="block text-sm font-medium mb-2" htmlFor="bw-time">Time</label>
-                    <input
-                        id="bw-time"
-                        type="time"
-                        value={form.time}
-                        onChange={e => setForm(prev => ({ ...prev, time: e.target.value }))}
-                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-base"
-                    />
-                </div>
-
                 <NumberField
                     label="Duration"
                     suffix="min"
@@ -264,6 +265,17 @@ export default function BreathworkPage() {
                     min={30}
                     max={250}
                 />
+
+                <div className="bg-card rounded-xl p-4 border border-border">
+                    <label className="block text-sm font-medium mb-2" htmlFor="bw-time">Time</label>
+                    <input
+                        id="bw-time"
+                        type="time"
+                        value={form.time}
+                        onChange={e => setForm(prev => ({ ...prev, time: e.target.value }))}
+                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-base"
+                    />
+                </div>
 
                 <div className="bg-card rounded-xl p-4 border border-border">
                     <label className="block text-sm font-medium mb-2" htmlFor="bw-comments">Comments</label>
