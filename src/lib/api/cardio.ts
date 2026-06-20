@@ -7,6 +7,9 @@ import {
     CardioSessionWithExercise,
 } from '@/types/database'
 
+// Preferred display order for the common cardio types; any others follow alphabetically.
+const PREFERRED_CARDIO_TYPE_ORDER = ['Zone 2', 'HIIT', 'Group Boxing Class']
+
 export async function getCardioTypes(): Promise<Exercise[]> {
     const supabase = createClient()
     const { data, error } = await supabase
@@ -17,7 +20,13 @@ export async function getCardioTypes(): Promise<Exercise[]> {
         .order('name', { ascending: true })
 
     if (error) throw error
-    return data ?? []
+
+    const rank = (name: string) => {
+        const i = PREFERRED_CARDIO_TYPE_ORDER.indexOf(name)
+        return i === -1 ? PREFERRED_CARDIO_TYPE_ORDER.length : i
+    }
+    // Stable sort keeps the unranked types in the alphabetical order from the query.
+    return (data ?? []).sort((a, b) => rank(a.name) - rank(b.name))
 }
 
 export async function getCardioSessionsForDate(date: string): Promise<CardioSessionWithExercise[]> {
