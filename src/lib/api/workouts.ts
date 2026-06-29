@@ -68,6 +68,23 @@ export async function getOrCreateWorkout(date: string): Promise<Workout> {
     return data
 }
 
+// Update a workout's name / note
+export async function updateWorkout(
+    workoutId: number,
+    updates: { name?: string | null; note?: string | null }
+): Promise<Workout> {
+    const supabase = createClient()
+    const { data, error } = await supabase
+        .from('workouts')
+        .update(updates)
+        .eq('id', workoutId)
+        .select()
+        .single()
+
+    if (error) throw error
+    return data
+}
+
 // Add exercise to workout
 export async function addExerciseToWorkout(
     workoutId: number,
@@ -207,7 +224,7 @@ export async function getAllWorkouts(): Promise<WorkoutWithPreview[]> {
                 )
             )
         `)
-        .order('date', { ascending: true })
+        .order('date', { ascending: false })
 
     if (workoutsError) throw workoutsError
 
@@ -220,6 +237,8 @@ export async function getAllWorkouts(): Promise<WorkoutWithPreview[]> {
         return {
             id: workout.id,
             date: workout.date,
+            name: workout.name ?? null,
+            note: workout.note ?? null,
             exercise_count: exercises.length,
             exercise_names: exercises.slice(0, 3)
         }

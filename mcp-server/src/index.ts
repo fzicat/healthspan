@@ -6,12 +6,20 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { z } from "zod";
 
-import { searchExercises } from "./tools/exercises.ts";
+import {
+  searchExercises,
+  findSimilarExercises,
+  createExercise,
+} from "./tools/exercises.ts";
 import { getExerciseHistory, listSets } from "./tools/sets.ts";
 import {
   getSummary,
   getWorkoutByDate,
   listRecentWorkouts,
+  createOrUpdateWorkout,
+  addWorkoutExercise,
+  updateWorkoutExercise,
+  removeWorkoutExercise,
 } from "./tools/workouts.ts";
 import { getDailyLog, listDailyLogs } from "./tools/daily-logs.ts";
 import { listCardioSessions } from "./tools/cardio.ts";
@@ -244,6 +252,153 @@ server.registerTool(
     },
   },
   async (args) => json(await listBreathworkSessions(args))
+);
+
+// --- Write tools: exercise library + current/future workout planning ----
+// All workout writes are limited to today or later. There is intentionally no
+// tool to edit or delete exercises, so exercises used in the past stay intact.
+
+server.registerTool(
+  "find_similar_exercises",
+  {
+    title: "Find similar exercises",
+    description:
+      "Fuzzy-search existing exercises that resemble a candidate name (trigram similarity + substring). " +
+      "Call this BEFORE create_exercise to avoid duplicates: strength moves have many aliases " +
+      "(e.g. 'DB Bench Press' == 'Dumbbell Chest Press'). Reuse a returned exercise_id when it is the same movement.",
+    inputSchema: {
+      query: z.string().describe("Candidate exercise name to check for near-duplicates."),
+      threshold: z
+        .number()
+        .min(0)
+        .max(1)
+        .optional()
+        .describe("Trigram similarity cutoff (0-1, default 0.3). Lower = more matches."),
+      limit: z.number().int().min(1).max(50).optional(),
+    },
+  },
+  async (args) => json(await findSimilarExercises(args))
+);
+
+server.registerTool(
+  "create_exercise",
+  {
+    title: "Create exercise",
+    description:
+      "Create a new exercise definition. Duplicate-guarded: unless confirm_create=true, it first runs a " +
+      "similarity search and, if any similar exercise exists, returns status='possible_duplicate' with " +
+      "candidates instead of inserting. Always prefer reusing an existing exercise_id. Only set " +
+      "confirm_create=true after you have inspected the candidates and are certain none is the same movement.",
+    inputSchema: {
+      name: z.string().describe("Exercise name (e.g. 'Barbell Back Squat')."),
+      category: z
+        .enum(["strength", "cardio"])
+        .optional()
+        .describe("Defaults to 'strength'."),
+      metrics: z
+        .object({
+          weight: z.boolean().optional(),
+          reps: z.boolean().optional(),
+          time: z.boolean().optional(),
+          distance: z.boolean().optional(),
+          unilateral: z.boolean().optional(),
+          dual_implements: z.boolean().optional(),
+        })
+        .optional()
+        .describe("Which metrics this exercise tracks. Sensible strength defaults if omitted."),
+      confirm_create: z
+        .boolean()
+        .optional()
+        .describe("Set true to override the duplicate guard once you've confirmed it's a new movement."),
+    },
+  },
+  async (args) => json(await createExercise(args))
+);
+
+server.registerTool(
+  "create_or_update_workout",
+  {
+    title: "Create or update workout",
+    description:
+      "Create a workout for a date (if absent) and/or set its name and note. " +
+      "Only dates today or later may be written; past dates are rejected.",
+    inputSchema: {
+      date: z.string().describe("ISO date (YYYY-MM-DD), today or later."),
+      name: z
+        .string()
+        .nullable()
+        .optional()
+        .describe("Workout name, e.g. 'Push Day A'. Pass null to clear."),
+      note: z
+        .string()
+        .nullable()
+        .optional()
+        .describe("Freeform workout note / coaching comment. Pass null to clear."),
+    },
+  },
+  async (args) => json(await createOrUpdateWorkout(args))
+);
+
+server.registerTool(
+  "add_workout_exercise",
+  {
+    title: "Add exercise to workout",
+    description:
+      "Append an exercise to a workout's plan (creates the workout if needed). " +
+      "Resolve exercise_id via search_exercises/create_exercise first. " +
+      "Only dates today or later may be written.",
+    inputSchema: {
+      date: z.string().describe("ISO date (YYYY-MM-DD), today or later."),
+      exercise_id: z.number().int().positive(),
+      details: z
+        .string()
+        .nullable()
+        .optional()
+        .describe("Prescription, e.g. '3x8 @ 135lb'."),
+      note: z
+        .string()
+        .nullable()
+        .optional()
+        .describe("Freeform per-exercise note / coaching cue."),
+      sort_order: z
+        .number()
+        .int()
+        .optional()
+        .describe("Position in the plan. Defaults to the end."),
+    },
+  },
+  async (args) => json(await addWorkoutExercise(args))
+);
+
+server.registerTool(
+  "update_workout_exercise",
+  {
+    title: "Update planned exercise",
+    description:
+      "Update the details, note, or sort_order of a planned exercise (by workout_exercise_id). " +
+      "Allowed only when the owning workout is dated today or later.",
+    inputSchema: {
+      workout_exercise_id: z.number().int().positive(),
+      details: z.string().nullable().optional(),
+      note: z.string().nullable().optional(),
+      sort_order: z.number().int().optional(),
+    },
+  },
+  async (args) => json(await updateWorkoutExercise(args))
+);
+
+server.registerTool(
+  "remove_workout_exercise",
+  {
+    title: "Remove planned exercise",
+    description:
+      "Remove a planned exercise from a workout (by workout_exercise_id). " +
+      "Allowed only when the owning workout is dated today or later.",
+    inputSchema: {
+      workout_exercise_id: z.number().int().positive(),
+    },
+  },
+  async (args) => json(await removeWorkoutExercise(args))
 );
 
 const transport = new StdioServerTransport();

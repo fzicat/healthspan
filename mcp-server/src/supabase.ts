@@ -1,7 +1,11 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../src/types/database.ts";
 
-export type DB = SupabaseClient<Database>;
+// The client is intentionally untyped (no <Database> generic), mirroring the
+// Next.js app's client. The hand-written Database type omits the per-table
+// Relationships metadata that newer postgrest-js requires, which would make
+// typed .insert()/.update() degrade to `never`. Tool functions cast results
+// explicitly instead.
+export type DB = SupabaseClient;
 
 let cached: DB | null = null;
 
@@ -23,7 +27,7 @@ export function getSupabase(): DB {
     );
   }
 
-  cached = createClient<Database>(url, key, {
+  cached = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   return cached;

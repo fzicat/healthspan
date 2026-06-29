@@ -109,12 +109,17 @@ export default function ScheduledWorkoutsPage() {
                                 <div className="flex items-center justify-between mb-1">
                                     <span className={`font-semibold ${workout.date === today ? 'text-primary' : 'text-foreground'
                                         }`}>
-                                        {formatDate(workout.date)}
+                                        {workout.name ? workout.name : formatDate(workout.date)}
                                     </span>
                                     <span className="text-sm text-muted-foreground">
                                         {workout.exercise_count} {workout.exercise_count === 1 ? 'exercise' : 'exercises'}
                                     </span>
                                 </div>
+                                {workout.name && (
+                                    <div className={`text-xs mb-1 ${workout.date === today ? 'text-primary' : 'text-muted-foreground'}`}>
+                                        {formatDate(workout.date)}
+                                    </div>
+                                )}
                                 {workout.exercise_names.length > 0 && (
                                     <div className="text-sm text-muted-foreground truncate">
                                         {workout.exercise_names.join(', ')}

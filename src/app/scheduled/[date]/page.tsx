@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback, use } from 'react'
+import { useState, useEffect, useCallback, useRef, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { WorkoutExerciseWithExercise, Exercise } from '@/types/database'
 import {
     getWorkoutForDate,
     getOrCreateWorkout,
+    updateWorkout,
     addExerciseToWorkout,
     removeExerciseFromWorkout,
     updateWorkoutExerciseDetails,
@@ -50,6 +51,12 @@ export default function WorkoutEditorPage({ params }: PageProps) {
     const [loading, setLoading] = useState(true)
     const [isEditing, setIsEditing] = useState(false)
 
+    // Workout name / note
+    const [name, setName] = useState('')
+    const [note, setNote] = useState('')
+    const savedName = useRef('')
+    const savedNote = useRef('')
+
     // Add exercise modal
     const [showAddModal, setShowAddModal] = useState(false)
 
@@ -69,6 +76,10 @@ export default function WorkoutEditorPage({ params }: PageProps) {
             const { workout, exercises: workoutExercises } = await getWorkoutForDate(date)
             setWorkoutId(workout?.id ?? null)
             setExercises(workoutExercises)
+            setName(workout?.name ?? '')
+            setNote(workout?.note ?? '')
+            savedName.current = workout?.name ?? ''
+            savedNote.current = workout?.note ?? ''
         } catch (error) {
             console.error('Failed to load workout:', error)
             showToast('Failed to load workout', 'error')
@@ -80,6 +91,34 @@ export default function WorkoutEditorPage({ params }: PageProps) {
     useEffect(() => {
         loadWorkout()
     }, [loadWorkout])
+
+    // Persist workout name/note on blur. Avoids creating an empty workout when
+    // there's nothing to save, and skips redundant writes when unchanged.
+    async function saveMeta(field: 'name' | 'note') {
+        const trimmed = (field === 'name' ? name : note).trim()
+        const prev = field === 'name' ? savedName.current : savedNote.current
+        if (trimmed === prev) return
+        if (!workoutId && trimmed === '') return
+
+        try {
+            let currentWorkoutId = workoutId
+            if (!currentWorkoutId) {
+                const workout = await getOrCreateWorkout(date)
+                currentWorkoutId = workout.id
+                setWorkoutId(currentWorkoutId)
+            }
+
+            await updateWorkout(currentWorkoutId, {
+                [field]: trimmed === '' ? null : trimmed,
+            })
+
+            if (field === 'name') savedName.current = trimmed
+            else savedNote.current = trimmed
+        } catch (error) {
+            console.error('Failed to save workout details:', error)
+            showToast('Failed to save workout details', 'error')
+        }
+    }
 
     async function handleAddExercise(exercise: Exercise) {
         try {
@@ -234,13 +273,42 @@ export default function WorkoutEditorPage({ params }: PageProps) {
                         )}
                     </button>
                 </div>
-                <h1 className="text-xl font-bold text-foreground">
-                    {isToday ? "Today's Workout" : formatDateDisplay(date)}
-                </h1>
-                {isToday && (
-                    <div className="text-sm text-primary font-medium mt-1">
-                        {formatDateDisplay(date)}
+                {isEditing ? (
+                    <div className="space-y-2">
+                        <div className={`text-sm font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}>
+                            {formatDateDisplay(date)}
+                        </div>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            onBlur={() => saveMeta('name')}
+                            placeholder="Workout name (e.g. Push Day A)"
+                            className="w-full p-2 bg-background border border-border rounded-lg text-lg font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                        <textarea
+                            value={note}
+                            onChange={e => setNote(e.target.value)}
+                            onBlur={() => saveMeta('note')}
+                            placeholder="Workout note..."
+                            rows={2}
+                            className="w-full p-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-y"
+                        />
                     </div>
+                ) : (
+                    <>
+                        <h1 className="text-xl font-bold text-foreground">
+                            {name || (isToday ? "Today's Workout" : formatDateDisplay(date))}
+                        </h1>
+                        {(name || isToday) && (
+                            <div className={`text-sm font-medium mt-1 ${isToday ? 'text-primary' : 'text-muted-foreground'}`}>
+                                {formatDateDisplay(date)}
+                            </div>
+                        )}
+                        {note && (
+                            <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">{note}</p>
+                        )}
+                    </>
                 )}
             </div>
 

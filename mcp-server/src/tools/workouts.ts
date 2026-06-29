@@ -1,6 +1,197 @@
 import { getSupabase } from "../supabase.ts";
 import { getCardioSessionsByDate } from "./cardio.ts";
 
+// --- Write guardrails ---------------------------------------------------
+// The MCP server uses the service-role key (RLS is bypassed), so the
+// "today or later" edit window must be enforced here in code.
+
+function today(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+// ISO YYYY-MM-DD strings compare chronologically as plain strings.
+function assertEditable(date: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw new Error(`Invalid date "${date}". Expected YYYY-MM-DD.`);
+  }
+  if (date < today()) {
+    throw new Error(
+      `Cannot edit ${date}: it is in the past. The agent may only create or edit ` +
+        `workouts dated today (${today()}) or later.`
+    );
+  }
+}
+
+// Resolve the workout row for a date, creating it if missing. Caller guards date.
+async function getOrCreateWorkoutRow(date: string) {
+  const supabase = getSupabase();
+
+  const { data: existing, error: selErr } = await supabase
+    .from("workouts")
+    .select("id, date, name, note")
+    .eq("date", date)
+    .maybeSingle();
+  if (selErr) throw selErr;
+  if (existing) return existing;
+
+  const { data: created, error: insErr } = await supabase
+    .from("workouts")
+    .insert({ date })
+    .select("id, date, name, note")
+    .single();
+  if (insErr) throw insErr;
+  return created;
+}
+
+// Create a workout for a date (if absent) and/or update its name/note.
+export async function createOrUpdateWorkout(args: {
+  date: string;
+  name?: string | null;
+  note?: string | null;
+}) {
+  assertEditable(args.date);
+  const supabase = getSupabase();
+
+  const workout = await getOrCreateWorkoutRow(args.date);
+
+  const patch: { name?: string | null; note?: string | null } = {};
+  if (args.name !== undefined) patch.name = args.name;
+  if (args.note !== undefined) patch.note = args.note;
+
+  if (Object.keys(patch).length === 0) {
+    return { status: "ok" as const, workout };
+  }
+
+  const { data, error } = await supabase
+    .from("workouts")
+    .update(patch)
+    .eq("id", workout.id)
+    .select("id, date, name, note")
+    .single();
+  if (error) throw error;
+  return { status: "ok" as const, workout: data };
+}
+
+// Add an exercise to a workout's plan (creates the workout if needed).
+export async function addWorkoutExercise(args: {
+  date: string;
+  exercise_id: number;
+  details?: string | null;
+  note?: string | null;
+  sort_order?: number;
+}) {
+  assertEditable(args.date);
+  const supabase = getSupabase();
+
+  // Verify the exercise exists and isn't soft-deleted.
+  const { data: exercise, error: exErr } = await supabase
+    .from("exercises")
+    .select("id, name, is_deleted")
+    .eq("id", args.exercise_id)
+    .maybeSingle();
+  if (exErr) throw exErr;
+  if (!exercise || exercise.is_deleted) {
+    throw new Error(
+      `exercise_id ${args.exercise_id} does not exist (or is deleted). ` +
+        `Resolve it with search_exercises / create_exercise first.`
+    );
+  }
+
+  const workout = await getOrCreateWorkoutRow(args.date);
+
+  let sort_order = args.sort_order;
+  if (sort_order === undefined) {
+    const { data: last } = await supabase
+      .from("workouts_exercises")
+      .select("sort_order")
+      .eq("workout_id", workout.id)
+      .order("sort_order", { ascending: false })
+      .limit(1);
+    sort_order = (last?.[0]?.sort_order ?? -1) + 1;
+  }
+
+  const { data, error } = await supabase
+    .from("workouts_exercises")
+    .insert({
+      workout_id: workout.id,
+      exercise_id: args.exercise_id,
+      sort_order,
+      details: args.details ?? null,
+      note: args.note ?? null,
+    })
+    .select("id, workout_id, exercise_id, sort_order, details, note")
+    .single();
+  if (error) throw error;
+
+  return { status: "created" as const, workout_exercise: data };
+}
+
+// Look up the workout date that owns a workouts_exercises row.
+async function getWorkoutExerciseDate(workoutExerciseId: number) {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("workouts_exercises")
+    .select("id, workout_id, workouts!inner(date)")
+    .eq("id", workoutExerciseId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) {
+    throw new Error(`workout_exercise_id ${workoutExerciseId} not found.`);
+  }
+  const date = (data as unknown as { workouts: { date: string } }).workouts.date;
+  return date;
+}
+
+// Update details / note / sort_order of a planned exercise.
+export async function updateWorkoutExercise(args: {
+  workout_exercise_id: number;
+  details?: string | null;
+  note?: string | null;
+  sort_order?: number;
+}) {
+  const date = await getWorkoutExerciseDate(args.workout_exercise_id);
+  assertEditable(date);
+  const supabase = getSupabase();
+
+  const patch: { details?: string | null; note?: string | null; sort_order?: number } = {};
+  if (args.details !== undefined) patch.details = args.details;
+  if (args.note !== undefined) patch.note = args.note;
+  if (args.sort_order !== undefined) patch.sort_order = args.sort_order;
+
+  if (Object.keys(patch).length === 0) {
+    throw new Error("Nothing to update: provide details, note, or sort_order.");
+  }
+
+  const { data, error } = await supabase
+    .from("workouts_exercises")
+    .update(patch)
+    .eq("id", args.workout_exercise_id)
+    .select("id, workout_id, exercise_id, sort_order, details, note")
+    .single();
+  if (error) throw error;
+  return { status: "ok" as const, workout_exercise: data };
+}
+
+// Remove a planned exercise from a workout.
+export async function removeWorkoutExercise(args: {
+  workout_exercise_id: number;
+}) {
+  const date = await getWorkoutExerciseDate(args.workout_exercise_id);
+  assertEditable(date);
+  const supabase = getSupabase();
+
+  const { error } = await supabase
+    .from("workouts_exercises")
+    .delete()
+    .eq("id", args.workout_exercise_id);
+  if (error) throw error;
+  return { status: "deleted" as const, workout_exercise_id: args.workout_exercise_id };
+}
+
 type WorkoutRow = { id: number; date: string };
 type ExerciseRow = {
   id: number;
