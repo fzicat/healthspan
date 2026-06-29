@@ -9,6 +9,7 @@ import {
   addExerciseToWorkout,
   removeExerciseFromWorkout,
   updateWorkoutExerciseDetails,
+  replaceWorkoutExercise,
   reorderWorkoutExercises,
   repeatDay
 } from '@/lib/api/workouts'
@@ -30,6 +31,7 @@ export default function TodaysWorkoutPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showRepeatModal, setShowRepeatModal] = useState(false)
+  const [replacingId, setReplacingId] = useState<number | null>(null)
   const { showToast } = useToast()
 
   const loadWorkout = useCallback(async () => {
@@ -72,6 +74,18 @@ export default function TodaysWorkoutPage() {
       await loadWorkout()
     } catch {
       showToast('Failed to remove exercise', 'error')
+    }
+  }
+
+  const handleReplaceExercise = async (exercise: Exercise) => {
+    if (replacingId === null) return
+    try {
+      await replaceWorkoutExercise(replacingId, exercise.id)
+      await loadWorkout()
+      setReplacingId(null)
+      showToast(`Replaced with ${exercise.name}`, 'success')
+    } catch {
+      showToast('Failed to replace exercise', 'error')
     }
   }
 
@@ -191,6 +205,7 @@ export default function TodaysWorkoutPage() {
               index={index}
               totalCount={exercises.length}
               onRemove={() => handleRemoveExercise(we.id)}
+              onReplace={() => setReplacingId(we.id)}
               onUpdateDetails={(details) => handleUpdateDetails(we.id, details)}
               onMoveUp={() => handleReorder(index, index - 1)}
               onMoveDown={() => handleReorder(index, index + 1)}
@@ -221,6 +236,15 @@ export default function TodaysWorkoutPage() {
         />
       )}
 
+      {/* Replace Exercise Modal */}
+      {replacingId !== null && (
+        <AddExerciseModal
+          title="Replace Exercise"
+          onClose={() => setReplacingId(null)}
+          onSelect={handleReplaceExercise}
+        />
+      )}
+
       {/* Repeat Day Modal */}
       {showRepeatModal && (
         <RepeatDayModal
@@ -238,6 +262,7 @@ interface ExerciseItemProps {
   index: number
   totalCount: number
   onRemove: () => void
+  onReplace: () => void
   onUpdateDetails: (details: string) => void
   onMoveUp: () => void
   onMoveDown: () => void
@@ -249,6 +274,7 @@ function ExerciseItem({
   index,
   totalCount,
   onRemove,
+  onReplace,
   onUpdateDetails,
   onMoveUp,
   onMoveDown
@@ -320,6 +346,18 @@ function ExerciseItem({
               </svg>
             </button>
             <button
+              onClick={onReplace}
+              className="p-1.5 rounded hover:bg-muted transition-colors"
+              aria-label="Replace exercise"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 3 4 7l4 4" />
+                <path d="M4 7h16" />
+                <path d="m16 21 4-4-4-4" />
+                <path d="M20 17H4" />
+              </svg>
+            </button>
+            <button
               onClick={onRemove}
               className="p-1.5 rounded hover:bg-muted transition-colors"
               aria-label="Remove"
@@ -356,9 +394,10 @@ function ExerciseItem({
 interface AddExerciseModalProps {
   onClose: () => void
   onSelect: (exercise: Exercise) => void
+  title?: string
 }
 
-function AddExerciseModal({ onClose, onSelect }: AddExerciseModalProps) {
+function AddExerciseModal({ onClose, onSelect, title = 'Add Exercise' }: AddExerciseModalProps) {
   const [query, setQuery] = useState('')
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -398,7 +437,7 @@ function AddExerciseModal({ onClose, onSelect }: AddExerciseModalProps) {
                     max-h-[70vh] flex flex-col border border-border shadow-xl">
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Add Exercise</h2>
+            <h2 className="text-lg font-semibold">{title}</h2>
             <button onClick={onClose} className="p-1">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />

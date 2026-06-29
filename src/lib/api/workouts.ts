@@ -150,6 +150,23 @@ export async function updateWorkoutExerciseDetails(
     return data
 }
 
+// Replace the exercise in a workout slot, keeping its details, note and sort_order
+export async function replaceWorkoutExercise(
+    workoutExerciseId: number,
+    newExerciseId: number
+): Promise<WorkoutExercise> {
+    const supabase = createClient()
+    const { data, error } = await supabase
+        .from('workouts_exercises')
+        .update({ exercise_id: newExerciseId })
+        .eq('id', workoutExerciseId)
+        .select()
+        .single()
+
+    if (error) throw error
+    return data
+}
+
 // Reorder exercises in workout
 export async function reorderWorkoutExercises(
     workoutId: number,

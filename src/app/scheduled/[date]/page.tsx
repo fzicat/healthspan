@@ -11,6 +11,7 @@ import {
     addExerciseToWorkout,
     removeExerciseFromWorkout,
     updateWorkoutExerciseDetails,
+    replaceWorkoutExercise,
     reorderWorkoutExercises,
     deleteWorkout,
     copyWorkout
@@ -59,6 +60,9 @@ export default function WorkoutEditorPage({ params }: PageProps) {
 
     // Add exercise modal
     const [showAddModal, setShowAddModal] = useState(false)
+
+    // Replace exercise modal (holds the workouts_exercises id being replaced)
+    const [replacingId, setReplacingId] = useState<number | null>(null)
 
     // Copy workout modal
     const [showCopyModal, setShowCopyModal] = useState(false)
@@ -136,6 +140,19 @@ export default function WorkoutEditorPage({ params }: PageProps) {
         } catch (error) {
             console.error('Failed to add exercise:', error)
             showToast('Failed to add exercise', 'error')
+        }
+    }
+
+    async function handleReplaceExercise(exercise: Exercise) {
+        if (replacingId === null) return
+        try {
+            await replaceWorkoutExercise(replacingId, exercise.id)
+            await loadWorkout()
+            setReplacingId(null)
+            showToast('Exercise replaced!', 'success')
+        } catch (error) {
+            console.error('Failed to replace exercise:', error)
+            showToast('Failed to replace exercise', 'error')
         }
     }
 
@@ -353,6 +370,7 @@ export default function WorkoutEditorPage({ params }: PageProps) {
                             index={index}
                             totalCount={exercises.length}
                             onRemove={() => handleRemoveExercise(we.id)}
+                            onReplace={() => setReplacingId(we.id)}
                             onUpdateDetails={(details) => handleUpdateDetails(we.id, details)}
                             onMoveUp={() => handleReorder(index, index - 1)}
                             onMoveDown={() => handleReorder(index, index + 1)}
@@ -380,6 +398,15 @@ export default function WorkoutEditorPage({ params }: PageProps) {
                 <AddExerciseModal
                     onClose={() => setShowAddModal(false)}
                     onSelect={handleAddExercise}
+                />
+            )}
+
+            {/* Replace Exercise Modal */}
+            {replacingId !== null && (
+                <AddExerciseModal
+                    title="Replace Exercise"
+                    onClose={() => setReplacingId(null)}
+                    onSelect={handleReplaceExercise}
                 />
             )}
 
@@ -484,6 +511,7 @@ interface ExerciseItemProps {
     index: number
     totalCount: number
     onRemove: () => void
+    onReplace: () => void
     onUpdateDetails: (details: string) => void
     onMoveUp: () => void
     onMoveDown: () => void
@@ -496,6 +524,7 @@ function ExerciseItem({
     index,
     totalCount,
     onRemove,
+    onReplace,
     onUpdateDetails,
     onMoveUp,
     onMoveDown,
@@ -569,6 +598,20 @@ function ExerciseItem({
                         )}
                     </div>
 
+                    {/* Replace button */}
+                    <button
+                        onClick={onReplace}
+                        className="p-2 text-muted-foreground hover:bg-muted rounded transition-colors"
+                        aria-label="Replace exercise"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M8 3 4 7l4 4" />
+                            <path d="M4 7h16" />
+                            <path d="m16 21 4-4-4-4" />
+                            <path d="M20 17H4" />
+                        </svg>
+                    </button>
+
                     {/* Remove button */}
                     <button
                         onClick={onRemove}
@@ -604,9 +647,10 @@ function ExerciseItem({
 interface AddExerciseModalProps {
     onClose: () => void
     onSelect: (exercise: Exercise) => void
+    title?: string
 }
 
-function AddExerciseModal({ onClose, onSelect }: AddExerciseModalProps) {
+function AddExerciseModal({ onClose, onSelect, title = 'Add Exercise' }: AddExerciseModalProps) {
     const [search, setSearch] = useState('')
     const [results, setResults] = useState<Exercise[]>([])
     const [loading, setLoading] = useState(false)
@@ -642,7 +686,7 @@ function AddExerciseModal({ onClose, onSelect }: AddExerciseModalProps) {
         <div className="fixed inset-0 bg-black/50 flex items-start pt-8 justify-center z-50">
             <div className="bg-card rounded-t-xl sm:rounded-xl w-full sm:max-w-md max-h-[80vh] flex flex-col shadow-xl">
                 <div className="p-4 border-b border-border flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-foreground">Add Exercise</h2>
+                    <h2 className="text-lg font-semibold text-foreground">{title}</h2>
                     <button
                         onClick={onClose}
                         className="p-2 hover:bg-muted rounded-lg transition-colors"
