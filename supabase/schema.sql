@@ -141,3 +141,35 @@ ALTER TABLE breathwork_sessions ADD COLUMN IF NOT EXISTS heart_rate_end INTEGER 
 CREATE INDEX IF NOT EXISTS breathwork_sessions_date ON breathwork_sessions (date DESC, logged_at DESC) WHERE is_deleted = FALSE;
 ALTER TABLE breathwork_sessions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow authenticated users full access to breathwork_sessions" ON breathwork_sessions FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Workout planning fields: a workout can carry a name (e.g. "Push Day A") and a freeform note.
+ALTER TABLE workouts ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE workouts ADD COLUMN IF NOT EXISTS note TEXT;
+-- Per-exercise note (coexists with details: details = prescription, note = freeform/coaching comment).
+ALTER TABLE workouts_exercises ADD COLUMN IF NOT EXISTS note TEXT;
+-- Fuzzy duplicate detection for exercises (strength moves have many aliases).
+-- The existing exercises_name_unique index still hard-blocks exact case-insensitive dupes.
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX IF NOT EXISTS exercises_name_trgm
+    ON exercises USING gin (LOWER(name) gin_trgm_ops)
+    WHERE is_deleted = FALSE;
+-- RPC: return existing (non-deleted) exercises whose name resembles a candidate name.
+-- Used by the MCP server before creating a new exercise to avoid near-duplicates.
+CREATE OR REPLACE FUNCTION find_similar_exercises(
+    p_query     TEXT,
+    p_threshold REAL DEFAULT 0.3,
+    p_limit     INT  DEFAULT 10
+)
+RETURNS TABLE (id INT, name TEXT, category TEXT, similarity REAL)
+LANGUAGE sql STABLE AS $$
+    SELECT e.id, e.name, e.category,
+           similarity(LOWER(e.name), LOWER(p_query)) AS similarity
+    FROM exercises e
+    WHERE e.is_deleted = FALSE
+      AND (
+            similarity(LOWER(e.name), LOWER(p_query)) >= p_threshold
+            OR LOWER(e.name)  LIKE '%' || LOWER(p_query) || '%'
+            OR LOWER(p_query) LIKE '%' || LOWER(e.name)  || '%'
+          )
+    ORDER BY similarity DESC
+    LIMIT p_limit;
+$$;

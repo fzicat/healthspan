@@ -1,15 +1,17 @@
 'use client'
 
-import { useState, useEffect, useCallback, use } from 'react'
+import { useState, useEffect, useCallback, useRef, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { WorkoutExerciseWithExercise, Exercise } from '@/types/database'
 import {
     getWorkoutForDate,
     getOrCreateWorkout,
+    updateWorkout,
     addExerciseToWorkout,
     removeExerciseFromWorkout,
     updateWorkoutExerciseDetails,
+    replaceWorkoutExercise,
     reorderWorkoutExercises,
     deleteWorkout,
     copyWorkout
@@ -50,8 +52,17 @@ export default function WorkoutEditorPage({ params }: PageProps) {
     const [loading, setLoading] = useState(true)
     const [isEditing, setIsEditing] = useState(false)
 
+    // Workout name / note
+    const [name, setName] = useState('')
+    const [note, setNote] = useState('')
+    const savedName = useRef('')
+    const savedNote = useRef('')
+
     // Add exercise modal
     const [showAddModal, setShowAddModal] = useState(false)
+
+    // Replace exercise modal (holds the workouts_exercises id being replaced)
+    const [replacingId, setReplacingId] = useState<number | null>(null)
 
     // Copy workout modal
     const [showCopyModal, setShowCopyModal] = useState(false)
@@ -69,6 +80,10 @@ export default function WorkoutEditorPage({ params }: PageProps) {
             const { workout, exercises: workoutExercises } = await getWorkoutForDate(date)
             setWorkoutId(workout?.id ?? null)
             setExercises(workoutExercises)
+            setName(workout?.name ?? '')
+            setNote(workout?.note ?? '')
+            savedName.current = workout?.name ?? ''
+            savedNote.current = workout?.note ?? ''
         } catch (error) {
             console.error('Failed to load workout:', error)
             showToast('Failed to load workout', 'error')
@@ -80,6 +95,34 @@ export default function WorkoutEditorPage({ params }: PageProps) {
     useEffect(() => {
         loadWorkout()
     }, [loadWorkout])
+
+    // Persist workout name/note on blur. Avoids creating an empty workout when
+    // there's nothing to save, and skips redundant writes when unchanged.
+    async function saveMeta(field: 'name' | 'note') {
+        const trimmed = (field === 'name' ? name : note).trim()
+        const prev = field === 'name' ? savedName.current : savedNote.current
+        if (trimmed === prev) return
+        if (!workoutId && trimmed === '') return
+
+        try {
+            let currentWorkoutId = workoutId
+            if (!currentWorkoutId) {
+                const workout = await getOrCreateWorkout(date)
+                currentWorkoutId = workout.id
+                setWorkoutId(currentWorkoutId)
+            }
+
+            await updateWorkout(currentWorkoutId, {
+                [field]: trimmed === '' ? null : trimmed,
+            })
+
+            if (field === 'name') savedName.current = trimmed
+            else savedNote.current = trimmed
+        } catch (error) {
+            console.error('Failed to save workout details:', error)
+            showToast('Failed to save workout details', 'error')
+        }
+    }
 
     async function handleAddExercise(exercise: Exercise) {
         try {
@@ -97,6 +140,19 @@ export default function WorkoutEditorPage({ params }: PageProps) {
         } catch (error) {
             console.error('Failed to add exercise:', error)
             showToast('Failed to add exercise', 'error')
+        }
+    }
+
+    async function handleReplaceExercise(exercise: Exercise) {
+        if (replacingId === null) return
+        try {
+            await replaceWorkoutExercise(replacingId, exercise.id)
+            await loadWorkout()
+            setReplacingId(null)
+            showToast('Exercise replaced!', 'success')
+        } catch (error) {
+            console.error('Failed to replace exercise:', error)
+            showToast('Failed to replace exercise', 'error')
         }
     }
 
@@ -234,13 +290,42 @@ export default function WorkoutEditorPage({ params }: PageProps) {
                         )}
                     </button>
                 </div>
-                <h1 className="text-xl font-bold text-foreground">
-                    {isToday ? "Today's Workout" : formatDateDisplay(date)}
-                </h1>
-                {isToday && (
-                    <div className="text-sm text-primary font-medium mt-1">
-                        {formatDateDisplay(date)}
+                {isEditing ? (
+                    <div className="space-y-2">
+                        <div className={`text-sm font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}>
+                            {formatDateDisplay(date)}
+                        </div>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            onBlur={() => saveMeta('name')}
+                            placeholder="Workout name (e.g. Push Day A)"
+                            className="w-full p-2 bg-background border border-border rounded-lg text-lg font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                        <textarea
+                            value={note}
+                            onChange={e => setNote(e.target.value)}
+                            onBlur={() => saveMeta('note')}
+                            placeholder="Workout note..."
+                            rows={2}
+                            className="w-full p-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-y"
+                        />
                     </div>
+                ) : (
+                    <>
+                        <h1 className="text-xl font-bold text-foreground">
+                            {name || (isToday ? "Today's Workout" : formatDateDisplay(date))}
+                        </h1>
+                        {(name || isToday) && (
+                            <div className={`text-sm font-medium mt-1 ${isToday ? 'text-primary' : 'text-muted-foreground'}`}>
+                                {formatDateDisplay(date)}
+                            </div>
+                        )}
+                        {note && (
+                            <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">{note}</p>
+                        )}
+                    </>
                 )}
             </div>
 
@@ -285,6 +370,7 @@ export default function WorkoutEditorPage({ params }: PageProps) {
                             index={index}
                             totalCount={exercises.length}
                             onRemove={() => handleRemoveExercise(we.id)}
+                            onReplace={() => setReplacingId(we.id)}
                             onUpdateDetails={(details) => handleUpdateDetails(we.id, details)}
                             onMoveUp={() => handleReorder(index, index - 1)}
                             onMoveDown={() => handleReorder(index, index + 1)}
@@ -312,6 +398,15 @@ export default function WorkoutEditorPage({ params }: PageProps) {
                 <AddExerciseModal
                     onClose={() => setShowAddModal(false)}
                     onSelect={handleAddExercise}
+                />
+            )}
+
+            {/* Replace Exercise Modal */}
+            {replacingId !== null && (
+                <AddExerciseModal
+                    title="Replace Exercise"
+                    onClose={() => setReplacingId(null)}
+                    onSelect={handleReplaceExercise}
                 />
             )}
 
@@ -416,6 +511,7 @@ interface ExerciseItemProps {
     index: number
     totalCount: number
     onRemove: () => void
+    onReplace: () => void
     onUpdateDetails: (details: string) => void
     onMoveUp: () => void
     onMoveDown: () => void
@@ -428,6 +524,7 @@ function ExerciseItem({
     index,
     totalCount,
     onRemove,
+    onReplace,
     onUpdateDetails,
     onMoveUp,
     onMoveDown,
@@ -501,6 +598,20 @@ function ExerciseItem({
                         )}
                     </div>
 
+                    {/* Replace button */}
+                    <button
+                        onClick={onReplace}
+                        className="p-2 text-muted-foreground hover:bg-muted rounded transition-colors"
+                        aria-label="Replace exercise"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M8 3 4 7l4 4" />
+                            <path d="M4 7h16" />
+                            <path d="m16 21 4-4-4-4" />
+                            <path d="M20 17H4" />
+                        </svg>
+                    </button>
+
                     {/* Remove button */}
                     <button
                         onClick={onRemove}
@@ -536,9 +647,10 @@ function ExerciseItem({
 interface AddExerciseModalProps {
     onClose: () => void
     onSelect: (exercise: Exercise) => void
+    title?: string
 }
 
-function AddExerciseModal({ onClose, onSelect }: AddExerciseModalProps) {
+function AddExerciseModal({ onClose, onSelect, title = 'Add Exercise' }: AddExerciseModalProps) {
     const [search, setSearch] = useState('')
     const [results, setResults] = useState<Exercise[]>([])
     const [loading, setLoading] = useState(false)
@@ -574,7 +686,7 @@ function AddExerciseModal({ onClose, onSelect }: AddExerciseModalProps) {
         <div className="fixed inset-0 bg-black/50 flex items-start pt-8 justify-center z-50">
             <div className="bg-card rounded-t-xl sm:rounded-xl w-full sm:max-w-md max-h-[80vh] flex flex-col shadow-xl">
                 <div className="p-4 border-b border-border flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-foreground">Add Exercise</h2>
+                    <h2 className="text-lg font-semibold text-foreground">{title}</h2>
                     <button
                         onClick={onClose}
                         className="p-2 hover:bg-muted rounded-lg transition-colors"

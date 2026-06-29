@@ -2,7 +2,7 @@
   "name": "healthspan-mcp-server",
   "version": "0.1.0",
   "private": true,
-  "description": "Read-only MCP server exposing Healthspan data to local AI agents.",
+  "description": "MCP server exposing Healthspan data to local AI agents (reads everything; writes limited to creating exercises and planning today/future workouts).",
   "type": "module",
   "bin": {
     "healthspan-mcp-server": "src/index.ts"

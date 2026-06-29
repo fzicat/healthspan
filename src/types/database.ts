@@ -85,14 +85,20 @@ export interface Database {
                 Row: {
                     id: number
                     date: string
+                    name: string | null
+                    note: string | null
                 }
                 Insert: {
                     id?: number
                     date: string
+                    name?: string | null
+                    note?: string | null
                 }
                 Update: {
                     id?: number
                     date?: string
+                    name?: string | null
+                    note?: string | null
                 }
             }
             workouts_exercises: {
@@ -102,6 +108,7 @@ export interface Database {
                     exercise_id: number
                     sort_order: number
                     details: string | null
+                    note: string | null
                 }
                 Insert: {
                     id?: number
@@ -109,6 +116,7 @@ export interface Database {
                     exercise_id: number
                     sort_order: number
                     details?: string | null
+                    note?: string | null
                 }
                 Update: {
                     id?: number
@@ -116,6 +124,7 @@ export interface Database {
                     exercise_id?: number
                     sort_order?: number
                     details?: string | null
+                    note?: string | null
                 }
             }
             cardio_sessions: {
@@ -249,7 +258,19 @@ export interface Database {
             [_ in never]: never
         }
         Functions: {
-            [_ in never]: never
+            find_similar_exercises: {
+                Args: {
+                    p_query: string
+                    p_threshold?: number
+                    p_limit?: number
+                }
+                Returns: {
+                    id: number
+                    name: string
+                    category: string
+                    similarity: number
+                }[]
+            }
         }
         Enums: {
             [_ in never]: never
