@@ -5,6 +5,7 @@ import {
     type StrengthSetSummaryInput,
     type WorkoutReportDay,
 } from '@/lib/reports/workout-calendar'
+import type { WeightPoint } from '@/lib/reports/weight-chart'
 
 const PAGE_SIZE = 1000
 
@@ -23,6 +24,11 @@ type CardioSessionRow = {
     exercises: {
         name: string
     }
+}
+
+type WeightLogRow = {
+    date: string
+    weight_lbs: number
 }
 
 async function getStrengthSetsForRange(from: string, to: string): Promise<StrengthSetSummaryInput[]> {
@@ -95,4 +101,33 @@ export async function getWorkoutReport(from: string, to: string): Promise<Workou
     ])
 
     return buildWorkoutReportDays(strengthSets, cardioSessions)
+}
+
+export async function getWeightReport(from: string | null, to: string): Promise<WeightPoint[]> {
+    const supabase = createClient()
+    const rows: WeightLogRow[] = []
+
+    for (let offset = 0; ; offset += PAGE_SIZE) {
+        let query = supabase
+            .from('daily_logs')
+            .select('date, weight_lbs')
+            .not('weight_lbs', 'is', null)
+            .lte('date', to)
+            .order('date', { ascending: true })
+            .range(offset, offset + PAGE_SIZE - 1)
+
+        if (from !== null) query = query.gte('date', from)
+
+        const { data, error } = await query
+        if (error) throw error
+
+        const page = (data ?? []) as unknown as WeightLogRow[]
+        rows.push(...page)
+        if (page.length < PAGE_SIZE) break
+    }
+
+    return rows.map(row => ({
+        date: row.date,
+        weight: row.weight_lbs,
+    }))
 }
