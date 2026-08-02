@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 
 const reportTabs = [
     { label: 'Workout', href: '/report/workout', enabled: true },
-    { label: 'HRV', href: '/report/hrv', enabled: false },
+    { label: 'HRV', href: '/report/hrv', enabled: true },
     { label: 'Weight', href: '/report/weight', enabled: true },
 ]
 
