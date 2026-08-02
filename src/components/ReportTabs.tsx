@@ -7,6 +7,7 @@ const reportTabs = [
     { label: 'Workout', href: '/report/workout', enabled: true },
     { label: 'HRV', href: '/report/hrv', enabled: true },
     { label: 'Weight', href: '/report/weight', enabled: true },
+    { label: 'Bloodwork', href: '/report/bloodwork', enabled: true },
 ]
 
 export function ReportTabs() {
