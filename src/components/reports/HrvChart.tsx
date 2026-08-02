@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import type {
     HrvAveragePoint,
     HrvReadingPoint,
@@ -8,6 +11,8 @@ const HEIGHT = 400
 const MARGIN = { top: 24, right: 28, bottom: 58, left: 68 }
 const PLOT_WIDTH = WIDTH - MARGIN.left - MARGIN.right
 const PLOT_HEIGHT = HEIGHT - MARGIN.top - MARGIN.bottom
+
+type HrvSeries = 'sleepReadings' | 'sleepAverage' | 'morningReadings' | 'morningAverage'
 
 function dateTime(date: string): number {
     return new Date(`${date}T00:00:00Z`).getTime()
@@ -32,6 +37,12 @@ export function HrvChart({
     sleepAverages: HrvAveragePoint[]
     morningAverages: HrvAveragePoint[]
 }) {
+    const [visibleSeries, setVisibleSeries] = useState<Record<HrvSeries, boolean>>({
+        sleepReadings: true,
+        sleepAverage: true,
+        morningReadings: true,
+        morningAverage: true,
+    })
     const allDates = [
         ...sleepReadings.map(point => point.date),
         ...morningReadings.map(point => point.date),
@@ -86,27 +97,61 @@ export function HrvChart({
             ? firstTime
             : firstTime + ((timeSpan * index) / (xTickCount - 1))
     ))
+    const toggleSeries = (series: HrvSeries) => {
+        setVisibleSeries(current => ({ ...current, [series]: !current[series] }))
+    }
+    const allSeriesHidden = Object.values(visibleSeries).every(isVisible => !isVisible)
 
     return (
         <div className="overflow-hidden rounded-xl border border-border bg-card">
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-border px-4 py-3 text-xs text-muted-foreground" aria-label="HRV chart legend">
-                <span className="inline-flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-blue" aria-hidden="true" />
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-border px-3 py-2 text-xs" aria-label="HRV chart legend">
+                <button
+                    type="button"
+                    onClick={() => toggleSeries('sleepReadings')}
+                    className={`inline-flex items-center gap-2 rounded-md px-2 py-1.5 transition-opacity ${visibleSeries.sleepReadings ? 'text-muted-foreground' : 'text-muted-foreground opacity-40 line-through'}`}
+                    aria-pressed={visibleSeries.sleepReadings}
+                    aria-label={`${visibleSeries.sleepReadings ? 'Hide' : 'Show'} Sleep HRV readings`}
+                >
+                    <span className={`h-2.5 w-2.5 rounded-full border border-blue ${visibleSeries.sleepReadings ? 'bg-blue' : 'bg-transparent'}`} aria-hidden="true" />
                     Sleep HRV
-                </span>
-                <span className="inline-flex items-center gap-2">
-                    <span className="h-1 w-7 rounded-full bg-blue" aria-hidden="true" />
+                </button>
+                <button
+                    type="button"
+                    onClick={() => toggleSeries('sleepAverage')}
+                    className={`inline-flex items-center gap-2 rounded-md px-2 py-1.5 transition-opacity ${visibleSeries.sleepAverage ? 'text-muted-foreground' : 'text-muted-foreground opacity-40 line-through'}`}
+                    aria-pressed={visibleSeries.sleepAverage}
+                    aria-label={`${visibleSeries.sleepAverage ? 'Hide' : 'Show'} Sleep HRV 14-day moving average`}
+                >
+                    <span className={`h-1 w-7 rounded-full border border-blue ${visibleSeries.sleepAverage ? 'bg-blue' : 'bg-transparent'}`} aria-hidden="true" />
                     Sleep HRV 14-day MA
-                </span>
-                <span className="inline-flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-purple" aria-hidden="true" />
+                </button>
+                <button
+                    type="button"
+                    onClick={() => toggleSeries('morningReadings')}
+                    className={`inline-flex items-center gap-2 rounded-md px-2 py-1.5 transition-opacity ${visibleSeries.morningReadings ? 'text-muted-foreground' : 'text-muted-foreground opacity-40 line-through'}`}
+                    aria-pressed={visibleSeries.morningReadings}
+                    aria-label={`${visibleSeries.morningReadings ? 'Hide' : 'Show'} Morning HRV readings`}
+                >
+                    <span className={`h-2.5 w-2.5 rounded-full border border-purple ${visibleSeries.morningReadings ? 'bg-purple' : 'bg-transparent'}`} aria-hidden="true" />
                     Morning HRV
-                </span>
-                <span className="inline-flex items-center gap-2">
-                    <span className="h-1 w-7 rounded-full bg-purple" aria-hidden="true" />
+                </button>
+                <button
+                    type="button"
+                    onClick={() => toggleSeries('morningAverage')}
+                    className={`inline-flex items-center gap-2 rounded-md px-2 py-1.5 transition-opacity ${visibleSeries.morningAverage ? 'text-muted-foreground' : 'text-muted-foreground opacity-40 line-through'}`}
+                    aria-pressed={visibleSeries.morningAverage}
+                    aria-label={`${visibleSeries.morningAverage ? 'Hide' : 'Show'} Morning HRV 14-day moving average`}
+                >
+                    <span className={`h-1 w-7 rounded-full border border-purple ${visibleSeries.morningAverage ? 'bg-purple' : 'bg-transparent'}`} aria-hidden="true" />
                     Morning HRV 14-day MA
-                </span>
+                </button>
             </div>
+
+            {allSeriesHidden && (
+                <p className="border-b border-border bg-background/30 px-4 py-3 text-center text-xs text-muted-foreground" role="status">
+                    All HRV series are hidden. Select a legend item to show it again.
+                </p>
+            )}
 
             <div className="overflow-x-auto px-2 py-3">
                 <svg
@@ -171,28 +216,28 @@ export function HrvChart({
                         HRV RMSSD (ms)
                     </text>
 
-                    {sleepReadings.length > 1 && (
+                    {visibleSeries.sleepReadings && sleepReadings.length > 1 && (
                         <path d={sleepPath} fill="none" stroke="var(--blue)" strokeOpacity="0.35" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
                     )}
-                    {morningReadings.length > 1 && (
+                    {visibleSeries.morningReadings && morningReadings.length > 1 && (
                         <path d={morningPath} fill="none" stroke="var(--purple)" strokeOpacity="0.35" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
                     )}
 
-                    {sleepReadings.map(point => (
+                    {visibleSeries.sleepReadings && sleepReadings.map(point => (
                         <circle key={point.date} cx={x(point.date)} cy={y(point.value)} r="4" fill="var(--blue)" stroke="var(--card)" strokeWidth="2">
                             <title>{point.date}: Sleep HRV {point.value.toFixed(1)} ms</title>
                         </circle>
                     ))}
-                    {morningReadings.map(point => (
+                    {visibleSeries.morningReadings && morningReadings.map(point => (
                         <circle key={point.date} cx={x(point.date)} cy={y(point.value)} r="4" fill="var(--purple)" stroke="var(--card)" strokeWidth="2">
                             <title>{point.date}: Morning HRV {point.value.toFixed(1)} ms</title>
                         </circle>
                     ))}
 
-                    {sleepAverages.length > 1 && (
+                    {visibleSeries.sleepAverage && sleepAverages.length > 1 && (
                         <path d={sleepAveragePath} fill="none" stroke="var(--blue)" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" />
                     )}
-                    {morningAverages.length > 1 && (
+                    {visibleSeries.morningAverage && morningAverages.length > 1 && (
                         <path d={morningAveragePath} fill="none" stroke="var(--purple)" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" />
                     )}
                 </svg>
