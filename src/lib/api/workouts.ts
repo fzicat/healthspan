@@ -7,6 +7,14 @@ import {
 } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { getExercisesFromDate } from './sets'
+import { assertUnlinkedWorkout } from './training-planning'
+import { validateDate } from '@/lib/training-planning/dates'
+
+async function assertUnlinkedExercise(id: number) {
+    const { data, error } = await createClient().from('workouts_exercises').select('workout_id').eq('id', id).single()
+    if (error || !data) throw new Error('Cannot verify the owning workout; no edit was made.')
+    await assertUnlinkedWorkout(data.workout_id)
+}
 
 // Get workout for a specific date
 export async function getWorkoutForDate(date: string): Promise<{
@@ -46,6 +54,7 @@ export async function getWorkoutForDate(date: string): Promise<{
 
 // Get or create workout for a date
 export async function getOrCreateWorkout(date: string): Promise<Workout> {
+    validateDate(date)
     const supabase = createClient()
 
     // Try to get existing
@@ -73,6 +82,7 @@ export async function updateWorkout(
     workoutId: number,
     updates: { name?: string | null; note?: string | null }
 ): Promise<Workout> {
+    await assertUnlinkedWorkout(workoutId)
     const supabase = createClient()
     const { data, error } = await supabase
         .from('workouts')
@@ -91,6 +101,7 @@ export async function addExerciseToWorkout(
     exerciseId: number,
     details?: string
 ): Promise<WorkoutExercise> {
+    await assertUnlinkedWorkout(workoutId)
     const supabase = createClient()
 
     // Get current max sort_order
@@ -124,6 +135,7 @@ export async function addExerciseToWorkout(
 export async function removeExerciseFromWorkout(
     workoutExerciseId: number
 ): Promise<void> {
+    await assertUnlinkedExercise(workoutExerciseId)
     const supabase = createClient()
     const { error } = await supabase
         .from('workouts_exercises')
@@ -138,6 +150,7 @@ export async function updateWorkoutExerciseDetails(
     workoutExerciseId: number,
     details: string
 ): Promise<WorkoutExercise> {
+    await assertUnlinkedExercise(workoutExerciseId)
     const supabase = createClient()
     const { data, error } = await supabase
         .from('workouts_exercises')
@@ -155,6 +168,7 @@ export async function replaceWorkoutExercise(
     workoutExerciseId: number,
     newExerciseId: number
 ): Promise<WorkoutExercise> {
+    await assertUnlinkedExercise(workoutExerciseId)
     const supabase = createClient()
     const { data, error } = await supabase
         .from('workouts_exercises')
@@ -172,6 +186,7 @@ export async function reorderWorkoutExercises(
     workoutId: number,
     orderedIds: number[]
 ): Promise<void> {
+    await assertUnlinkedWorkout(workoutId)
     const supabase = createClient()
 
     // Update each exercise's sort_order
@@ -183,7 +198,9 @@ export async function reorderWorkoutExercises(
             .eq('workout_id', workoutId)
     )
 
-    await Promise.all(updates)
+    const results = await Promise.all(updates)
+    const failed = results.find(result => result.error)
+    if (failed?.error) throw failed.error
 }
 
 // Repeat a day: copy exercises from another date to today's workout
@@ -202,6 +219,7 @@ export async function repeatDay(
 
     // Get or create target workout
     const targetWorkout = await getOrCreateWorkout(targetDate)
+    await assertUnlinkedWorkout(targetWorkout.id)
 
     // Clear existing exercises from target workout
     await supabase
@@ -320,6 +338,7 @@ export async function getAdjacentExercises(
 
 // Delete a workout and all its exercises
 export async function deleteWorkout(workoutId: number): Promise<void> {
+    await assertUnlinkedWorkout(workoutId)
     const supabase = createClient()
 
     // Delete workout (cascade will remove workouts_exercises)
@@ -346,6 +365,8 @@ export async function copyWorkout(
         .select('id')
         .eq('date', targetDate)
         .single()
+
+    if (existingWorkout) await assertUnlinkedWorkout(existingWorkout.id)
 
     if (existingWorkout && !replaceIfExists) {
         return { status: 'conflict' }

@@ -1,0 +1,66 @@
+{
+  "label": "Synthetic LOCAL PGlite + test-only HTTP adapter; not Supabase validation",
+  "results": [
+    {
+      "name": "adapter-rejects-missing-and-forged-session",
+      "status": "passed"
+    },
+    {
+      "name": "anonymous-middleware-redirect",
+      "status": "passed"
+    },
+    {
+      "name": "training-navigation",
+      "status": "passed"
+    },
+    {
+      "name": "training-context-render",
+      "status": "passed"
+    },
+    {
+      "name": "owner-proposal-and-activation",
+      "status": "passed"
+    },
+    {
+      "name": "linked-workout-operation-contracts",
+      "status": "passed"
+    },
+    {
+      "name": "next-day-recovery-and-pending-slot",
+      "status": "passed"
+    },
+    {
+      "name": "supportive-cardio-bounds-and-numeric-payload",
+      "status": "passed"
+    },
+    {
+      "name": "immutable-history",
+      "status": "passed"
+    },
+    {
+      "name": "original-logger-prefill-and-save",
+      "status": "passed"
+    },
+    {
+      "name": "mobile-training-layout",
+      "status": "passed"
+    },
+    {
+      "name": "logger-during-planning-outage",
+      "status": "passed"
+    },
+    {
+      "name": "logger-without-migration",
+      "status": "passed"
+    }
+  ],
+  "pageErrors": [],
+  "blockedExternalOrigins": [],
+  "migrations": [
+    "202609220001_training_planning.sql",
+    "202609220002_training_engine.sql",
+    "202609220003_training_rpcs.sql",
+    "202609220004_training_grants.sql"
+  ],
+  "screenshots": "Captured, not visually inspected"
+}

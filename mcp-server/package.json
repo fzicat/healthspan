@@ -9,7 +9,9 @@
   },
   "scripts": {
     "dev": "tsx src/index.ts",
-    "inspect": "npx @modelcontextprotocol/inspector tsx src/index.ts"
+    "inspect": "npx @modelcontextprotocol/inspector tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "HSPAN_MCP_NO_DOTENV=1 tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",

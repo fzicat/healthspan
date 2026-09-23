@@ -1,0 +1,47 @@
+
+> healthspan@0.1.0 build
+> next build
+
+▲ Next.js 16.1.4 (Turbopack)
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 1536.1ms
+  Running TypeScript ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/20) ...
+  Generating static pages using 11 workers (5/20) 
+  Generating static pages using 11 workers (10/20) 
+  Generating static pages using 11 workers (15/20) 
+✓ Generating static pages using 11 workers (20/20) in 231.9ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /auth/callback
+├ ○ /breathwork
+├ ○ /cardio
+├ ○ /evening
+├ ƒ /exercise/[id]
+├ ○ /icon.png
+├ ○ /library
+├ ○ /login
+├ ○ /morning
+├ ○ /report
+├ ○ /report/bloodwork
+├ ○ /report/hrv
+├ ○ /report/weight
+├ ○ /report/workout
+├ ○ /scheduled
+├ ƒ /scheduled/[date]
+├ ○ /settings
+├ ○ /strength
+└ ○ /training
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

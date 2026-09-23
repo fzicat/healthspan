@@ -1,0 +1,118 @@
+{
+  "startedAt": "2026-09-23T00:36:49.627Z",
+  "finishedAt": "2026-09-23T00:36:55.157Z",
+  "serverVersion": "PostgreSQL 18.4 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit",
+  "port": 43467,
+  "sourceHashes": [
+    {
+      "file": "supabase/schema.sql",
+      "sha256": "ea0294bf8ebfa347ca8d540864bf757c240e6f1a24415ecc406a6635ff12f6dd"
+    },
+    {
+      "file": "supabase/migrations/202609220001_training_planning.sql",
+      "sha256": "a1186e1525861da430961f15ed5cfa38b1225b5ec6b7d5c7884c137b02b3792b"
+    },
+    {
+      "file": "supabase/migrations/202609220002_training_engine.sql",
+      "sha256": "8658d7408cae98a8f9f583bf81df61216f6a0b3b8c931af7f42eeea68920e550"
+    },
+    {
+      "file": "supabase/migrations/202609220003_training_rpcs.sql",
+      "sha256": "f0c8518b0d2d8d8459296b83bfc4e075e7707ab3b6485d3ec0ea18fe71458d2b"
+    },
+    {
+      "file": "supabase/migrations/202609220004_training_grants.sql",
+      "sha256": "27da6867a02279d3817e0f482488a6a5f9857fa33d06ab2ca88c395854a6c3a8"
+    }
+  ],
+  "results": [
+    {
+      "name": "restricted non-superuser schema administrator applies all four real migrations",
+      "passed": true
+    },
+    {
+      "name": "A20/A32 simultaneous identical request: one receipt/session/workout/prescription",
+      "passed": true
+    },
+    {
+      "name": "A20/A32 distinct concurrent keys on one expected version: one commit, one VERSION_CONFLICT",
+      "passed": true
+    },
+    {
+      "name": "activation versus materialization (first=0): no partial authority/intent",
+      "passed": true
+    },
+    {
+      "name": "activation versus materialization (first=1): no partial authority/intent",
+      "passed": true
+    },
+    {
+      "name": "activation versus qualifying reconciliation (first=0): no double credit",
+      "passed": true
+    },
+    {
+      "name": "activation versus qualifying reconciliation (first=1): no double credit",
+      "passed": true
+    },
+    {
+      "name": "concurrent same-occurrence reconciliations advance exactly once, including fresh retry",
+      "passed": true
+    },
+    {
+      "name": "raw evidence committed after context: stale mutation rejects without partial intent",
+      "passed": true
+    },
+    {
+      "name": "evidence triggers serialize concurrent raw writers; rollback restores version and raw row",
+      "passed": true
+    },
+    {
+      "name": "all seven legacy evidence sources increment versions on INSERT/UPDATE/DELETE",
+      "passed": true
+    },
+    {
+      "name": "real lock inversion deadlock: 40P01 rollback, context refresh/retry, no partial or double credit",
+      "passed": true
+    },
+    {
+      "name": "real login roles: owner permitted; other user/anon and role-claim mismatches denied",
+      "passed": true
+    },
+    {
+      "name": "service-role coach cannot activate, change lifecycle, confirm owner evidence, or forge actor fields",
+      "passed": true
+    },
+    {
+      "name": "planning tables, helper execution, history mutation, and schema-create are denied at SQL ACLs",
+      "passed": true
+    },
+    {
+      "name": "fixed SECURITY DEFINER paths resist caller temporary-table shadowing",
+      "passed": true
+    }
+  ],
+  "cleanup": {
+    "closed": true,
+    "dataRemoved": true,
+    "trackedPids": [
+      599826,
+      599836,
+      599837,
+      599838,
+      599839,
+      599840,
+      599841,
+      599842,
+      599843,
+      599834,
+      599835,
+      599827,
+      599828,
+      599829,
+      599830,
+      599831,
+      599833
+    ]
+  },
+  "scope": "Synthetic native PostgreSQL engine/SQL privileges only. JWT claim GUCs model trusted gateway inputs; no JWT signature, GoTrue, PostgREST, or production Supabase certification."
+}

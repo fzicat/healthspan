@@ -13,17 +13,37 @@ import {
     updateSet,
     deleteSet
 } from '@/lib/api/sets'
+import { resolveLoggingSession, type TrainingSession } from '@/lib/api/training-planning'
+import { TrainingContext } from '@/components/TrainingContext'
+import { athleteDate, DEFAULT_ATHLETE_TIMEZONE } from '@/lib/training-planning/dates'
 import { useToast } from '@/contexts/ToastContext'
 
 interface PageProps {
     params: Promise<{ id: string }>
+    searchParams: Promise<{ session?: string | string[] }>
 }
 
-export default function ExercisePage({ params }: PageProps) {
+export default function ExercisePage({ params, searchParams }: PageProps) {
     const { id } = use(params)
+    const query = use(searchParams)
+    const requestedSessionId = typeof query.session === 'string' ? query.session : null
     const exerciseId = parseInt(id, 10)
     const router = useRouter()
     const { showToast } = useToast()
+
+    const [resolvedLink, setResolvedLink] = useState<{ exerciseId: number; requestedId: string; session: TrainingSession | null } | null>(null)
+    const loggingSession = resolvedLink?.exerciseId === exerciseId && resolvedLink.requestedId === requestedSessionId ? resolvedLink.session : null
+    const [linkError, setLinkError] = useState('')
+    // An explicit occurrence is resolved separately; no planning read gates logging.
+    useEffect(() => {
+        let active = true
+        const sessionId = requestedSessionId
+        if (sessionId) void resolveLoggingSession(sessionId, exerciseId).then(session => {
+            if (active) { setResolvedLink({ exerciseId, requestedId: sessionId, session }); setLinkError(session ? '' : 'Occurrence not applicable; new sets will be unlinked.') }
+        }).catch(() => { if (active) setLinkError('Planning unavailable; new sets will be unlinked.') })
+        return () => { active = false }
+    }, [exerciseId, requestedSessionId])
+    const sessionQuery = loggingSession ? `?session=${loggingSession.id}` : ''
 
     const [exercise, setExercise] = useState<Exercise | null>(null)
     const [sets, setSets] = useState<Set[]>([])
@@ -72,8 +92,7 @@ export default function ExercisePage({ params }: PageProps) {
             setHasMore(more)
 
             // Load today's details from workout
-            const today = new Date()
-            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+            const todayStr = athleteDate()
             const details = await getExerciseDetailsForDate(exerciseId, todayStr)
             setExerciseDetails(details)
 
@@ -117,7 +136,7 @@ export default function ExercisePage({ params }: PageProps) {
                 setEditingSet(null)
                 showToast('Set updated!', 'success')
             } else {
-                await createSet(exerciseId, values)
+                await createSet(exerciseId, { ...values, ...(loggingSession ? { training_session_id: loggingSession.id } : {}) })
                 showToast('Set saved! 💪', 'success')
             }
 
@@ -127,10 +146,7 @@ export default function ExercisePage({ params }: PageProps) {
             setHasMore(more)
             setPage(1)
         } catch {
-            showToast('Failed to save set', 'error', {
-                label: 'Retry',
-                onClick: handleSave
-            })
+            showToast('Save not verified. Check history before saving again; no automatic retry was made.', 'error')
         } finally {
             setIsSaving(false)
         }
@@ -203,6 +219,9 @@ export default function ExercisePage({ params }: PageProps) {
                 <h1 className="text-2xl font-bold">{exercise.name}</h1>
             </div>
 
+            <TrainingContext context={null} session={loggingSession} error={linkError} />
+            {linkError && <p className="text-xs text-muted-foreground mb-2">{linkError}</p>}
+
             {/* Exercise Details for today */}
             {exerciseDetails && (
                 <p className="text-sm text-muted-foreground ml-10 -mt-1 mb-1">{exerciseDetails}</p>
@@ -213,7 +232,7 @@ export default function ExercisePage({ params }: PageProps) {
                 <div className="flex items-center justify-between mb-3 px-1">
                     {adjacentExercises.prev ? (
                         <Link
-                            href={`/exercise/${adjacentExercises.prev.id}`}
+                            href={`/exercise/${adjacentExercises.prev.id}${sessionQuery}`}
                             className="flex items-center gap-1.5 text-sm font-medium transition-colors rounded-md px-2 py-1"
                             style={{ color: 'var(--orange)' }}
                         >
@@ -227,7 +246,7 @@ export default function ExercisePage({ params }: PageProps) {
                     )}
                     {adjacentExercises.next ? (
                         <Link
-                            href={`/exercise/${adjacentExercises.next.id}`}
+                            href={`/exercise/${adjacentExercises.next.id}${sessionQuery}`}
                             className="flex items-center gap-1.5 text-sm font-medium transition-colors rounded-md px-2 py-1"
                             style={{ color: 'var(--orange)' }}
                         >
@@ -426,8 +445,8 @@ export default function ExercisePage({ params }: PageProps) {
                         </div>
                         <ul className="space-y-0.5">
                             {sets.map(set => {
-                                const today = new Date().toLocaleDateString('en-CA')
-                                const setDate = new Date(set.logged_at).toLocaleDateString('en-CA')
+                                const today = athleteDate()
+                                const setDate = athleteDate(new Date(set.logged_at))
                                 return (
                                     <SetHistoryItem
                                         key={set.id}
@@ -511,6 +530,7 @@ function SetHistoryItem({ set, metrics, isToday, onEdit, onDelete }: SetHistoryI
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr)
         return date.toLocaleDateString('en-US', {
+            timeZone: DEFAULT_ATHLETE_TIMEZONE,
             month: 'short',
             day: 'numeric',
         })
@@ -519,6 +539,7 @@ function SetHistoryItem({ set, metrics, isToday, onEdit, onDelete }: SetHistoryI
     const formatTime = (dateStr: string) => {
         const date = new Date(dateStr)
         return date.toLocaleTimeString('en-US', {
+            timeZone: DEFAULT_ATHLETE_TIMEZONE,
             hour: 'numeric',
             minute: '2-digit',
         })

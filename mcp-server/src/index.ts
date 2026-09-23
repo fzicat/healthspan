@@ -24,15 +24,24 @@ import {
 import { getDailyLog, listDailyLogs } from "./tools/daily-logs.ts";
 import { listCardioSessions } from "./tools/cardio.ts";
 import { listBreathworkSessions } from "./tools/breathwork.ts";
+import { TrainingPlanning, registerTrainingTools, guardSchema, dateSchema } from "./tools/training-planning.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-loadDotenv({ path: resolve(__dirname, "../../.env.local") });
-loadDotenv({ path: resolve(__dirname, "../../.env") });
+// Test runners must disable automatic files and pass an allowlisted environment.
+// This switch changes configuration loading only; it never bypasses authentication.
+if (process.env.HSPAN_MCP_NO_DOTENV !== "1") {
+  loadDotenv({ path: resolve(__dirname, "../../.env.local") });
+  loadDotenv({ path: resolve(__dirname, "../../.env") });
+}
 
 const server = new McpServer({
   name: "healthspan-data",
-  version: "0.1.0",
+  version: "0.2.0",
 });
+
+// A stdio process is one connection; never share this lane across connections.
+const planning = new TrainingPlanning();
+registerTrainingTools(server, planning);
 
 function json(data: unknown) {
   return {
@@ -70,7 +79,7 @@ server.registerTool(
     title: "List recent workouts",
     description:
       "Returns recent workout days (most recent first), each with the ordered list of planned exercises. " +
-      "Use for a quick overview of training cadence.",
+      "Planned rows are NOT evidence of attendance, execution or qualification. Returns an explicit page envelope.",
     inputSchema: {
       limit: z.number().int().min(1).max(100).optional(),
       before_date: z
@@ -90,7 +99,7 @@ server.registerTool(
   {
     title: "Get workout by date",
     description:
-      "Full detail for one workout day: the planned exercises (from workouts_exercises) plus every set logged that day.",
+      "Athlete-local day: planned exercises plus actual sets/cardio, even without a workout. Includes names/notes, archived-library history and completeness; non-atomic legacy view, not write authority.",
     inputSchema: {
       date: z
         .string()
@@ -110,6 +119,7 @@ server.registerTool(
     inputSchema: {
       exercise_id: z.number().int().positive(),
       limit: z.number().int().min(1).max(500).optional(),
+      offset: z.number().int().nonnegative().optional(),
       from: z
         .string()
         .optional()
@@ -120,8 +130,7 @@ server.registerTool(
         .describe("ISO datetime. Only include sets logged at or before this."),
     },
   },
-  async ({ exercise_id, limit, from, to }) =>
-    json(await getExerciseHistory({ exercise_id, limit, from, to }))
+  async (args) => json(await getExerciseHistory(args))
 );
 
 server.registerTool(
@@ -136,6 +145,7 @@ server.registerTool(
       from: z.string().optional().describe("ISO datetime lower bound."),
       to: z.string().optional().describe("ISO datetime upper bound."),
       limit: z.number().int().min(1).max(500).optional(),
+      offset: z.number().int().nonnegative().optional(),
     },
   },
   async (args) => json(await listSets(args))
@@ -146,8 +156,7 @@ server.registerTool(
   {
     title: "Get training summary",
     description:
-      "Aggregate counts across a date range: total workouts, total sets, and sets-per-exercise tally. " +
-      "Use for quick context priming at the start of a coaching session.",
+      "Date-range planned-workout count (NOT performed sessions), actual set count and per-exercise set tally. Explicit completeness; use get_training_context for authority and qualification.",
     inputSchema: {
       from: z.string().optional().describe("ISO date (YYYY-MM-DD)."),
       to: z.string().optional().describe("ISO date (YYYY-MM-DD)."),
@@ -192,10 +201,10 @@ server.registerTool(
         .optional()
         .describe("ISO date (YYYY-MM-DD). Only include logs on or before this date."),
       limit: z.number().int().min(1).max(365).optional(),
+      offset: z.number().int().nonnegative().optional(),
     },
   },
-  async ({ from, to, limit }) =>
-    json(await listDailyLogs({ from, to, limit }))
+  async (args) => json(await listDailyLogs(args))
 );
 
 server.registerTool(
@@ -217,6 +226,7 @@ server.registerTool(
         .optional()
         .describe("ISO date (YYYY-MM-DD). Only include sessions on or before this date."),
       limit: z.number().int().min(1).max(500).optional(),
+      offset: z.number().int().nonnegative().optional(),
     },
   },
   async (args) => json(await listCardioSessions(args))
@@ -249,6 +259,7 @@ server.registerTool(
         .optional()
         .describe("ISO date (YYYY-MM-DD). Only include sessions on or before this date."),
       limit: z.number().int().min(1).max(500).optional(),
+      offset: z.number().int().nonnegative().optional(),
     },
   },
   async (args) => json(await listBreathworkSessions(args))
@@ -312,7 +323,11 @@ server.registerTool(
         .describe("Set true to override the duplicate guard once you've confirmed it's a new movement."),
     },
   },
-  async (args) => json(await createExercise(args))
+  async (args) => {
+    const result = await createExercise(args);
+    if (result.status === "created") planning.receipts.invalidate();
+    return json(result);
+  }
 );
 
 server.registerTool(
@@ -323,7 +338,8 @@ server.registerTool(
       "Create a workout for a date (if absent) and/or set its name and note. " +
       "Only dates today or later may be written; past dates are rejected.",
     inputSchema: {
-      date: z.string().describe("ISO date (YYYY-MM-DD), today or later."),
+      ...guardSchema,
+      date: dateSchema.describe("Athlete-local ISO date (YYYY-MM-DD), today or later."),
       name: z
         .string()
         .nullable()
@@ -336,7 +352,7 @@ server.registerTool(
         .describe("Freeform workout note / coaching comment. Pass null to clear."),
     },
   },
-  async (args) => json(await createOrUpdateWorkout(args))
+  async (args) => json(await createOrUpdateWorkout(args, planning))
 );
 
 server.registerTool(
@@ -348,7 +364,8 @@ server.registerTool(
       "Resolve exercise_id via search_exercises/create_exercise first. " +
       "Only dates today or later may be written.",
     inputSchema: {
-      date: z.string().describe("ISO date (YYYY-MM-DD), today or later."),
+      ...guardSchema,
+      date: dateSchema.describe("Athlete-local ISO date (YYYY-MM-DD), today or later."),
       exercise_id: z.number().int().positive(),
       details: z
         .string()
@@ -367,7 +384,7 @@ server.registerTool(
         .describe("Position in the plan. Defaults to the end."),
     },
   },
-  async (args) => json(await addWorkoutExercise(args))
+  async (args) => json(await addWorkoutExercise(args, planning))
 );
 
 server.registerTool(
@@ -378,13 +395,14 @@ server.registerTool(
       "Update the details, note, or sort_order of a planned exercise (by workout_exercise_id). " +
       "Allowed only when the owning workout is dated today or later.",
     inputSchema: {
+      ...guardSchema,
       workout_exercise_id: z.number().int().positive(),
       details: z.string().nullable().optional(),
       note: z.string().nullable().optional(),
       sort_order: z.number().int().optional(),
     },
   },
-  async (args) => json(await updateWorkoutExercise(args))
+  async (args) => json(await updateWorkoutExercise(args, planning))
 );
 
 server.registerTool(
@@ -395,10 +413,11 @@ server.registerTool(
       "Remove a planned exercise from a workout (by workout_exercise_id). " +
       "Allowed only when the owning workout is dated today or later.",
     inputSchema: {
+      ...guardSchema,
       workout_exercise_id: z.number().int().positive(),
     },
   },
-  async (args) => json(await removeWorkoutExercise(args))
+  async (args) => json(await removeWorkoutExercise(args, planning))
 );
 
 const transport = new StdioServerTransport();

@@ -12,7 +12,9 @@ let cached: DB | null = null;
 export function getSupabase(): DB {
   if (cached) return cached;
 
-  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = process.env.HSPAN_MCP_NO_DOTENV === "1"
+    ? process.env.SUPABASE_URL
+    : process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url) {

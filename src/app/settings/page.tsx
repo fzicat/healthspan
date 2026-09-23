@@ -1,11 +1,14 @@
 'use client'
 
+import { useTrainingContext } from '@/components/TrainingContext'
+import { DEFAULT_ATHLETE_TIMEZONE } from '@/lib/training-planning/dates'
 import { useTheme } from '@/contexts/ThemeContext'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/contexts/ToastContext'
 
 export default function SettingsPage() {
+    const planning = useTrainingContext()
     const { theme, toggleTheme } = useTheme()
     const router = useRouter()
     const { showToast } = useToast()
@@ -26,6 +29,7 @@ export default function SettingsPage() {
             <h1 className="text-2xl font-bold mb-6">Settings</h1>
 
             <div className="space-y-4">
+                <section className="bg-card rounded-xl p-4 border border-border"><h2 className="font-medium">Athlete timezone</h2><p>{planning.context?.athlete_timezone ?? DEFAULT_ATHLETE_TIMEZONE}</p><p className="text-sm text-muted-foreground">{planning.context ? "Provisioned planning timezone. Travel does not relabel stored dates." : "Default logging timezone; planning configuration is not verified."} Timezone changes require explicit administrator migration.</p></section>
                 {/* Theme Toggle */}
                 <div className="bg-card rounded-xl p-4 border border-border">
                     <div className="flex items-center justify-between">

@@ -1,5 +1,12 @@
 # Healthspan
 
+## Durable training planning (feature branch, not deployed)
+
+Read `docs/training-planning/IMPLEMENTATION-REPORT.md` for implementation and explicit A1–A32 evidence/limitations. `/training` is optional; normal set logging remains independent. Planning requires the four additive SQL migrations and explicit inactive owner/timezone provisioning before any authenticated owner activation. Never rerun `supabase/schema.sql` on an existing database. Apply only after reviewing `docs/training-planning/SQL-RUNBOOK.md`. No live athlete plan is included.
+
+Tests: `npm ci --ignore-scripts`, `npm --prefix mcp-server ci --ignore-scripts`, then `npm run test:training`, `npm run lint`, and `npm --prefix mcp-server run typecheck`. Browser/build isolation instructions are in `tests/README.md`; all fixtures are local/synthetic. Set `NEXT_PUBLIC_ATHLETE_TIMEZONE` at build time and `HSPAN_ATHLETE_TIMEZONE` for MCP to the provisioned zone (defaults: America/Montreal).
+
+
 A mobile-first web app for logging healthspan data: strength training today, with cardio, sleep, HRV, and nutrition planned next.
 
 No social features — just fast logging with automatic recall of your last performance and clean data access for an AI fitness coach.

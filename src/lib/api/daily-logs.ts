@@ -1,3 +1,4 @@
+import { athleteDate, DEFAULT_ATHLETE_TIMEZONE } from '@/lib/training-planning/dates'
 import { createClient } from '@/lib/supabase/client'
 import { DailyLog, DailyLogInsert } from '@/types/database'
 
@@ -30,10 +31,6 @@ export async function upsertDailyLog(
     return data
 }
 
-export function getTodayDate(): string {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
+export function getTodayDate(timezone = DEFAULT_ATHLETE_TIMEZONE): string {
+    return athleteDate(new Date(), timezone)
 }

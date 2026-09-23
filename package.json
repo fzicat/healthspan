@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:training:sql": "node supabase/tests/training-planning.mjs && node supabase/tests/extended-training.mjs && node supabase/tests/automatic-training.mjs && node supabase/tests/runbook.mjs",
+    "test:training:protocol": "tsx --test tests/mcp-database.spec.ts tests/mcp-safety.spec.ts",
+    "test:training:native": "node --import tsx tests/native-training.mts",
+    "test:training:browser": "tsx tests/training-planning.spec.ts",
+    "test:training": "tsx --test tests/dates.test.ts && npm run test:training:sql && npm --prefix mcp-server test && npm run test:training:protocol && npm run test:training:native"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
@@ -16,13 +21,19 @@
     "react-dom": "19.2.3"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "embedded-postgres": "^18.4.0-beta.17",
     "eslint": "^9",
     "eslint-config-next": "16.1.4",
+    "pg": "^8.23.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

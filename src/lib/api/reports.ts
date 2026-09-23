@@ -1,3 +1,4 @@
+import { localDayBounds, DEFAULT_ATHLETE_TIMEZONE } from '@/lib/training-planning/dates'
 import { createClient } from '@/lib/supabase/client'
 import {
     buildWorkoutReportDays,
@@ -38,7 +39,7 @@ type HrvLogRow = {
     morning_hrv_rmssd: number | null
 }
 
-async function getStrengthSetsForRange(from: string, to: string): Promise<StrengthSetSummaryInput[]> {
+async function getStrengthSetsForRange(from: string, to: string, timezone: string): Promise<StrengthSetSummaryInput[]> {
     const supabase = createClient()
     const rows: StrengthSetRow[] = []
 
@@ -49,8 +50,8 @@ async function getStrengthSetsForRange(from: string, to: string): Promise<Streng
             .eq('is_deleted', false)
             .eq('exercises.is_deleted', false)
             .eq('exercises.category', 'strength')
-            .gte('logged_at', `${from}T00:00:00.000Z`)
-            .lte('logged_at', `${to}T23:59:59.999Z`)
+            .gte('logged_at', localDayBounds(from, timezone).start)
+            .lt('logged_at', localDayBounds(to, timezone).end)
             .order('logged_at', { ascending: true })
             .order('id', { ascending: true })
             .range(offset, offset + PAGE_SIZE - 1)
@@ -101,9 +102,9 @@ async function getCardioSessionsForRange(from: string, to: string): Promise<Card
     }))
 }
 
-export async function getWorkoutReport(from: string, to: string): Promise<WorkoutReportDay[]> {
+export async function getWorkoutReport(from: string, to: string, timezone = DEFAULT_ATHLETE_TIMEZONE): Promise<WorkoutReportDay[]> {
     const [strengthSets, cardioSessions] = await Promise.all([
-        getStrengthSetsForRange(from, to),
+        getStrengthSetsForRange(from, to, timezone),
         getCardioSessionsForRange(from, to),
     ])
 

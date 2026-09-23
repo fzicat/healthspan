@@ -17,6 +17,11 @@ import {
     copyWorkout
 } from '@/lib/api/workouts'
 import { searchExercises } from '@/lib/api/exercises'
+import { TrainingContext, useTrainingContext } from '@/components/TrainingContext'
+import { TrainingLinkedEditor } from '@/components/TrainingLinkedEditor'
+import { TrainingEvidence } from '@/components/TrainingEvidence'
+import { sessionForWorkout } from '@/lib/api/training-planning'
+import { athleteDate } from '@/lib/training-planning/dates'
 import { useToast } from '@/contexts/ToastContext'
 
 interface PageProps {
@@ -35,11 +40,7 @@ function formatDateDisplay(dateString: string): string {
 }
 
 function getTodayDate(): string {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
+    return athleteDate()
 }
 
 export default function WorkoutEditorPage({ params }: PageProps) {
@@ -48,6 +49,8 @@ export default function WorkoutEditorPage({ params }: PageProps) {
     const { showToast } = useToast()
 
     const [workoutId, setWorkoutId] = useState<number | null>(null)
+    const planning = useTrainingContext(date)
+    const session = sessionForWorkout(planning.context, workoutId)
     const [exercises, setExercises] = useState<WorkoutExerciseWithExercise[]>([])
     const [loading, setLoading] = useState(true)
     const [isEditing, setIsEditing] = useState(false)
@@ -120,7 +123,7 @@ export default function WorkoutEditorPage({ params }: PageProps) {
             else savedNote.current = trimmed
         } catch (error) {
             console.error('Failed to save workout details:', error)
-            showToast('Failed to save workout details', 'error')
+            showToast(error instanceof Error ? error.message : 'Failed to save workout details', 'error')
         }
     }
 
@@ -139,7 +142,7 @@ export default function WorkoutEditorPage({ params }: PageProps) {
             showToast('Exercise added!', 'success')
         } catch (error) {
             console.error('Failed to add exercise:', error)
-            showToast('Failed to add exercise', 'error')
+            showToast(error instanceof Error ? error.message : 'Failed to add exercise', 'error')
         }
     }
 
@@ -152,7 +155,7 @@ export default function WorkoutEditorPage({ params }: PageProps) {
             showToast('Exercise replaced!', 'success')
         } catch (error) {
             console.error('Failed to replace exercise:', error)
-            showToast('Failed to replace exercise', 'error')
+            showToast(error instanceof Error ? error.message : 'Failed to replace exercise', 'error')
         }
     }
 
@@ -162,7 +165,7 @@ export default function WorkoutEditorPage({ params }: PageProps) {
             await loadWorkout()
         } catch (error) {
             console.error('Failed to remove exercise:', error)
-            showToast('Failed to remove exercise', 'error')
+            showToast(error instanceof Error ? error.message : 'Failed to remove exercise', 'error')
         }
     }
 
@@ -172,7 +175,7 @@ export default function WorkoutEditorPage({ params }: PageProps) {
             await loadWorkout()
         } catch (error) {
             console.error('Failed to update details:', error)
-            showToast('Failed to update details', 'error')
+            showToast(error instanceof Error ? error.message : 'Failed to update details', 'error')
         }
     }
 
@@ -190,7 +193,7 @@ export default function WorkoutEditorPage({ params }: PageProps) {
             await reorderWorkoutExercises(workoutId, orderedIds)
         } catch (error) {
             console.error('Failed to reorder:', error)
-            showToast('Failed to reorder', 'error')
+            showToast(error instanceof Error ? error.message : 'Failed to reorder', 'error')
             await loadWorkout()
         }
     }
@@ -213,7 +216,7 @@ export default function WorkoutEditorPage({ params }: PageProps) {
             router.push(`/scheduled/${copyTargetDate}`)
         } catch (error) {
             console.error('Failed to copy workout:', error)
-            showToast('Failed to copy workout', 'error')
+            showToast(error instanceof Error ? error.message : 'Failed to copy workout', 'error')
         }
     }
 
@@ -228,7 +231,7 @@ export default function WorkoutEditorPage({ params }: PageProps) {
             router.push(`/scheduled/${copyTargetDate}`)
         } catch (error) {
             console.error('Failed to replace workout:', error)
-            showToast('Failed to replace workout', 'error')
+            showToast(error instanceof Error ? error.message : 'Failed to replace workout', 'error')
         }
     }
 
@@ -242,7 +245,7 @@ export default function WorkoutEditorPage({ params }: PageProps) {
             router.push('/scheduled')
         } catch (error) {
             console.error('Failed to delete workout:', error)
-            showToast('Failed to delete workout', 'error')
+            showToast(error instanceof Error ? error.message : 'Failed to delete workout', 'error')
         }
     }
 
@@ -354,7 +357,10 @@ export default function WorkoutEditorPage({ params }: PageProps) {
                 </div>
             )}
 
-            {/* Exercise List */}
+            <TrainingContext context={planning.context} error={planning.error} loading={planning.loading} session={session} />
+      {session && planning.context && <TrainingLinkedEditor context={planning.context} session={session} isOwner={planning.isOwner} refresh={async () => { await loadWorkout(); await planning.refresh() }} />}
+    {session && planning.context && <details className="mb-4"><summary className="min-h-11 py-3 cursor-pointer text-sm">Reports & missing session evidence</summary><TrainingEvidence context={planning.context} isOwner={planning.isOwner} refresh={planning.refresh} onlySessionId={session.id} /></details>}
+    {/* Exercise List */}
             {exercises.length === 0 ? (
                 <div className="p-8 text-center">
                     <div className="text-muted-foreground mb-2">No exercises in this workout.</div>
@@ -366,6 +372,7 @@ export default function WorkoutEditorPage({ params }: PageProps) {
                         <ExerciseItem
                             key={we.id}
                             workoutExercise={we}
+              sessionId={session?.id}
                             isEditing={isEditing}
                             index={index}
                             totalCount={exercises.length}
@@ -506,6 +513,7 @@ export default function WorkoutEditorPage({ params }: PageProps) {
 
 // Exercise Item Component
 interface ExerciseItemProps {
+    sessionId?: string
     workoutExercise: WorkoutExerciseWithExercise
     isEditing: boolean
     index: number
@@ -519,6 +527,7 @@ interface ExerciseItemProps {
 }
 
 function ExerciseItem({
+    sessionId,
     workoutExercise,
     isEditing,
     index,
@@ -631,7 +640,7 @@ function ExerciseItem({
     return (
         <li>
             <Link
-                href={`/exercise/${exercise.id}?from=/scheduled/${date}`}
+                href={`/exercise/${exercise.id}?from=/scheduled/${date}${sessionId ? `&session=${sessionId}` : ''}`}
                 className="block p-4 hover:bg-muted/50 transition-colors"
             >
                 <div className="font-semibold text-foreground">{exercise.name}</div>

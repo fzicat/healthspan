@@ -1,4 +1,5 @@
 import { Set, SetInsert, SetUpdate, SetWithExercise, Exercise } from '@/types/database'
+import { localDayBounds, DEFAULT_ATHLETE_TIMEZONE } from '@/lib/training-planning/dates'
 import { createClient } from '@/lib/supabase/client'
 
 // Get sets for an exercise with pagination
@@ -72,6 +73,7 @@ export async function createSet(
         time?: number | null
         distance?: number | null
         rir?: number | null
+        training_session_id?: string
     }
 ): Promise<Set> {
     const supabase = createClient()
@@ -82,6 +84,7 @@ export async function createSet(
         time: values.time ?? null,
         distance: values.distance ?? null,
         rir: values.rir ?? null,
+        ...(values.training_session_id ? { training_session_id: values.training_session_id } : {}),
     }
 
     const { data, error } = await supabase
@@ -137,10 +140,9 @@ export async function deleteSet(id: number): Promise<void> {
 }
 
 // Get all sets logged on a specific date with their exercises
-export async function getSetsForDate(date: string): Promise<SetWithExercise[]> {
+export async function getSetsForDate(date: string, timezone = DEFAULT_ATHLETE_TIMEZONE): Promise<SetWithExercise[]> {
     const supabase = createClient()
-    const startOfDay = `${date}T00:00:00.000Z`
-    const endOfDay = `${date}T23:59:59.999Z`
+    const { start: startOfDay, end: endOfDay } = localDayBounds(date, timezone)
 
     const { data, error } = await supabase
         .from('sets')
@@ -151,7 +153,7 @@ export async function getSetsForDate(date: string): Promise<SetWithExercise[]> {
         .eq('is_deleted', false)
         .eq('exercises.is_deleted', false)
         .gte('logged_at', startOfDay)
-        .lte('logged_at', endOfDay)
+        .lt('logged_at', endOfDay)
         .order('logged_at', { ascending: true })
 
     if (error) throw error

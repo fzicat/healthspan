@@ -17,9 +17,33 @@ export type ExerciseMetrics = {
 
 export type ExerciseCategory = 'strength' | 'cardio'
 
+type ReadOnlyPlanningTable<Row> = { Row: Row; Insert: never; Update: never }
+type PlanningFunction = { Args: { p_input?: Json }; Returns: Json }
+
 export interface Database {
     public: {
         Tables: {
+            training_plan_state: ReadOnlyPlanningTable<{
+                id: number; owner_user_id: string; athlete_timezone: string
+                lifecycle: 'inactive' | 'active' | 'paused' | 'archived'
+                active_revision_id: string | null; state_version: number; evidence_version: number
+            }>
+            training_plan_revisions: ReadOnlyPlanningTable<{
+                id: string; state_id: number; parent_revision_id: string | null; schema_version: number
+                content: Json; authored_at: string; authored_on: string; timezone: string; source: 'owner' | 'coach'
+            }>
+            training_session_contexts: ReadOnlyPlanningTable<{
+                id: string; state_id: number; revision_id: string; slot_key: string | null; cycle_key: string
+                planned_date: string; timezone: string; activity_kind: 'strength' | 'cardio' | 'mobility' | 'rest'
+                load_tags: Json; resistance_slot_key: string | null; workout_id: number | null
+                snapshot: Json; origin: 'prescribed' | 'retrospective'; source_state_version: number
+                source_evidence_version: number; created_at: string
+            }>
+            training_plan_events: ReadOnlyPlanningTable<{
+                id: string; state_id: number; kind: string; revision_id: string | null; session_id: string | null
+                payload: Json; actor: string; occurred_at: string; occurred_on: string; timezone: string
+                request_id: string | null; operation: string | null; request_digest: string | null; result: Json | null
+            }>
             exercises: {
                 Row: {
                     id: number
@@ -51,6 +75,7 @@ export interface Database {
                     id: number
                     exercise_id: number
                     logged_at: string
+                    training_session_id: string | null
                     weight: number | null
                     reps: number | null
                     time: number | null
@@ -61,6 +86,7 @@ export interface Database {
                 Insert: {
                     id?: number
                     exercise_id: number
+                    training_session_id?: string | null
                     logged_at?: string
                     weight?: number | null
                     reps?: number | null
@@ -72,6 +98,7 @@ export interface Database {
                 Update: {
                     id?: number
                     exercise_id?: number
+                    training_session_id?: string | null
                     logged_at?: string
                     weight?: number | null
                     reps?: number | null
@@ -258,6 +285,15 @@ export interface Database {
             [_ in never]: never
         }
         Functions: {
+            get_training_context: PlanningFunction
+            get_training_history: PlanningFunction
+            get_training_request: PlanningFunction
+            propose_training_revision: PlanningFunction
+            activate_training_revision: PlanningFunction
+            set_training_lifecycle: PlanningFunction
+            record_training_decision: PlanningFunction
+            materialize_training_session: PlanningFunction
+            mutate_training_workout: PlanningFunction
             find_similar_exercises: {
                 Args: {
                     p_query: string

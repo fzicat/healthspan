@@ -11,6 +11,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+    { href: '/training', label: 'Training direction', icon: <span aria-hidden="true">◎</span> },
     {
         href: '/',
         label: 'Welcome',
