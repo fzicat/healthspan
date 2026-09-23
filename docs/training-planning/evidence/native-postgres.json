@@ -1,8 +1,8 @@
 {
-  "startedAt": "2026-09-23T00:36:49.627Z",
-  "finishedAt": "2026-09-23T00:36:55.157Z",
+  "startedAt": "2026-09-23T12:33:55.323Z",
+  "finishedAt": "2026-09-23T12:34:01.340Z",
   "serverVersion": "PostgreSQL 18.4 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit",
-  "port": 43467,
+  "port": 46133,
   "sourceHashes": [
     {
       "file": "supabase/schema.sql",
@@ -14,11 +14,11 @@
     },
     {
       "file": "supabase/migrations/202609220002_training_engine.sql",
-      "sha256": "8658d7408cae98a8f9f583bf81df61216f6a0b3b8c931af7f42eeea68920e550"
+      "sha256": "cdab4741d452b0063070dca993ff9036c47646888a8cbaf3493dcb8c618ae9b7"
     },
     {
       "file": "supabase/migrations/202609220003_training_rpcs.sql",
-      "sha256": "f0c8518b0d2d8d8459296b83bfc4e075e7707ab3b6485d3ec0ea18fe71458d2b"
+      "sha256": "81e74a26cd101821724bd711f672f1905c30b73147ebd66bd20b896fe8765fb8"
     },
     {
       "file": "supabase/migrations/202609220004_training_grants.sql",
@@ -28,6 +28,14 @@
   "results": [
     {
       "name": "restricted non-superuser schema administrator applies all four real migrations",
+      "passed": true
+    },
+    {
+      "name": "R4 overlapping cancelled reissue (same key=true) preserves one new occurrence and original snapshot",
+      "passed": true
+    },
+    {
+      "name": "R4 overlapping cancelled reissue (same key=false) preserves one new occurrence and original snapshot",
       "passed": true
     },
     {
@@ -95,23 +103,23 @@
     "closed": true,
     "dataRemoved": true,
     "trackedPids": [
-      599826,
-      599836,
-      599837,
-      599838,
-      599839,
-      599840,
-      599841,
-      599842,
-      599843,
-      599834,
-      599835,
-      599827,
-      599828,
-      599829,
-      599830,
-      599831,
-      599833
+      621167,
+      621177,
+      621178,
+      621179,
+      621180,
+      621181,
+      621182,
+      621183,
+      621184,
+      621175,
+      621176,
+      621168,
+      621169,
+      621170,
+      621171,
+      621174,
+      621172
     ]
   },
   "scope": "Synthetic native PostgreSQL engine/SQL privileges only. JWT claim GUCs model trusted gateway inputs; no JWT signature, GoTrue, PostgREST, or production Supabase certification."

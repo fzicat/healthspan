@@ -20,6 +20,7 @@ The database is disposable `.training-test/native-postgres`. A `.training-test/n
 - Full `supabase/schema.sql`, including native `pg_trgm`, and all four real additive migrations.
 - Migration execution by a disposable non-superuser database/schema owner with CREATEROLE, including actual function ownership transfer. If a migration is blocked, the test remains failed; the suite explicitly applies it as disposable native superuser solely to continue independent tests.
 - Real independently authenticated PostgreSQL connections: same-key materialization replay, distinct-key version conflict, activation/materialization and activation/reconciliation in both lock-acquisition orders, and duplicate reconciliation credit prevention.
+- Explicit cancelled-day reissue races with the same request key and with distinct keys; one replacement occurrence, one dated workout, no exposure, original snapshot retained.
 - Barriers inspect `pg_stat_activity` and `pg_blocking_pids`; requests genuinely overlap in separate server backends, rather than being promises serialized by a one-connection mock.
 - Raw evidence committed after a context read rejects stale mutations. Competing raw writers serialize evidence-version increments, rollback restores both row/version, and all seven legacy evidence triggers are exercised.
 - A deliberately constructed real set-row/singleton lock inversion produces PostgreSQL `40P01`; the aborted operation leaves no receipt or partial owner clarification, and an explicit fresh-context retry yields one credit.

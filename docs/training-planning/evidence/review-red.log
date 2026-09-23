@@ -1,0 +1,198 @@
+✖ R1 effective day confirmation resets spacing; correction never overrides real sets (1111.410069ms)
+✖ R5 latest corrected report removes phantom work but retains history and nonqualifying actual load (893.831547ms)
+✖ R5 evidence-scoped resolutions and changed load/date: stale resolutions never erase new work or raw sets (843.99019ms)
+✖ R2 exact cardio proposal and deliberate corrected reference; owner-only and mismatched references rejected (858.353323ms)
+✖ R3 logged primary cardio exposes precise association, never auto-links and rejects duplicate reuse (870.04209ms)
+✖ R4 explicit cancelled reissue reuses dated workout, keeps snapshots and exact replay, never credits intent (888.49202ms)
+✖ R4 activation-cancelled phase can reissue; actual work or freeform/uncancelled intent cannot be overwritten (880.428283ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 0
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6611.497859
+
+✖ failing tests:
+
+test at tests/review-regressions.spec.ts:32:3
+✖ R1 effective day confirmation resets spacing; correction never overrides real sets (1111.410069ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  true !== false
+
+      at <anonymous> (/home/fzicat/projects/healthspan-training-planning/tests/review-regressions.spec.ts:40:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async withFixture (/home/fzicat/projects/healthspan-training-planning/tests/review-regressions.spec.ts:26:9)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/review-regressions.spec.ts:55:3
+✖ R5 latest corrected report removes phantom work but retains history and nonqualifying actual load (893.831547ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  false !== true
+
+      at <anonymous> (/home/fzicat/projects/healthspan-training-planning/tests/review-regressions.spec.ts:62:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async withFixture (/home/fzicat/projects/healthspan-training-planning/tests/review-regressions.spec.ts:26:9)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/review-regressions.spec.ts:70:3
+✖ R5 evidence-scoped resolutions and changed load/date: stale resolutions never erase new work or raw sets (843.99019ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  1 !== 0
+
+      at <anonymous> (/home/fzicat/projects/healthspan-training-planning/tests/review-regressions.spec.ts:76:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async withFixture (/home/fzicat/projects/healthspan-training-planning/tests/review-regressions.spec.ts:26:9)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/review-regressions.spec.ts:96:3
+✖ R2 exact cardio proposal and deliberate corrected reference; owner-only and mismatched references rejected (858.353323ms)
+  error: INVALID_INPUT_FIELDS
+      at Ie.la (/home/fzicat/projects/healthspan-training-planning/node_modules/@electric-sql/pglite/dist/index.cjs:4:22506)
+      at Ie.Qa (/home/fzicat/projects/healthspan-training-planning/node_modules/@electric-sql/pglite/dist/index.cjs:4:19876)
+      at Ie.parse (/home/fzicat/projects/healthspan-training-planning/node_modules/@electric-sql/pglite/dist/index.cjs:4:18520)
+      at _e.Ia (/home/fzicat/projects/healthspan-training-planning/node_modules/@electric-sql/pglite/dist/index.cjs:15:1788)
+      at <anonymous> (/home/fzicat/projects/healthspan-training-planning/node_modules/@electric-sql/pglite/dist/index.cjs:15:1161)
+      at wasm://wasm/0267bb86:wasm-function[10930]:0x5a5ccf
+      at wasm://wasm/0267bb86:wasm-function[3585]:0x27eaeb
+      at wasm://wasm/0267bb86:wasm-function[3627]:0x2869d1
+      at wasm://wasm/0267bb86:wasm-function[3637]:0x286c2d
+      at wasm://wasm/0267bb86:wasm-function[9914]:0x54fd4d {
+    length: 486,
+    severity: 'ERROR',
+    code: 'P0001',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: `PL/pgSQL function training_fail(text) line 1 at RAISE\nSQL statement "SELECT public.training_fail('INVALID_INPUT_FIELDS')"\nPL/pgSQL function training_keys(jsonb,text[]) line 3 at PERFORM\nSQL statement "SELECT public.training_keys(p_input,keys||ARRAY['kind','reason','request_id','expected_state_version','expected_evidence_version'])"\nPL/pgSQL function record_training_decision(jsonb) line 22 at PERFORM`,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'pl_exec.c',
+    line: '3923',
+    routine: 'exec_stmt_raise',
+    query: 'SELECT public."record_training_decision"($1::jsonb) AS result',
+    params: [ '{"reason":"Synthetic review regression","kind":"confirm_report","session_id":"3eb1dfbe-8150-4493-ba04-1568794b385b","report":{"performed_on":"2026-09-22","minutes":30},"corrected_proposal_event_id":"8d4a90da-05d5-478f-bbd5-ed003496c68e","duplicate_checked":true,"expected_state_version":5,"expected_evidence_version":1,"request_id":"2f728233-75fb-45f4-ba2e-304c319bca33"}' ],
+    queryOptions: undefined
+  }
+
+test at tests/review-regressions.spec.ts:108:3
+✖ R3 logged primary cardio exposes precise association, never auto-links and rejects duplicate reuse (870.04209ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+    assert(c.evidence.pending_qualifiers.some((q: Json) => q.session_id === sid && q.missing_qualifiers.includes('cardio_association')))
+
+      at <anonymous> (/home/fzicat/projects/healthspan-training-planning/tests/review-regressions.spec.ts:114:5)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async withFixture (/home/fzicat/projects/healthspan-training-planning/tests/review-regressions.spec.ts:26:9)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:787:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/review-regressions.spec.ts:123:3
+✖ R4 explicit cancelled reissue reuses dated workout, keeps snapshots and exact replay, never credits intent (888.49202ms)
+  error: INVALID_INPUT_FIELDS
+      at Ie.la (/home/fzicat/projects/healthspan-training-planning/node_modules/@electric-sql/pglite/dist/index.cjs:4:22506)
+      at Ie.Qa (/home/fzicat/projects/healthspan-training-planning/node_modules/@electric-sql/pglite/dist/index.cjs:4:19876)
+      at Ie.parse (/home/fzicat/projects/healthspan-training-planning/node_modules/@electric-sql/pglite/dist/index.cjs:4:18520)
+      at _e.Ia (/home/fzicat/projects/healthspan-training-planning/node_modules/@electric-sql/pglite/dist/index.cjs:15:1788)
+      at <anonymous> (/home/fzicat/projects/healthspan-training-planning/node_modules/@electric-sql/pglite/dist/index.cjs:15:1161)
+      at wasm://wasm/0267bb86:wasm-function[10930]:0x5a5ccf
+      at wasm://wasm/0267bb86:wasm-function[3585]:0x27eaeb
+      at wasm://wasm/0267bb86:wasm-function[3627]:0x2869d1
+      at wasm://wasm/0267bb86:wasm-function[3637]:0x286c2d
+      at wasm://wasm/0267bb86:wasm-function[9914]:0x54fd4d {
+    length: 573,
+    severity: 'ERROR',
+    code: 'P0001',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: `PL/pgSQL function training_fail(text) line 1 at RAISE\nSQL statement "SELECT public.training_fail('INVALID_INPUT_FIELDS')"\nPL/pgSQL function training_keys(jsonb,text[]) line 3 at PERFORM\nSQL statement "SELECT public.training_keys(p_input,ARRAY['request_id','expected_state_version','expected_evidence_version','target_date','activity_kind','slot_key','reason','revisit_on','exercises','duration_minutes','intensity'])"\nPL/pgSQL function materialize_training_session(jsonb) line 4 at PERFORM`,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'pl_exec.c',
+    line: '3923',
+    routine: 'exec_stmt_raise',
+    query: 'SELECT public."materialize_training_session"($1::jsonb) AS result',
+    params: [ '{"target_date":"2026-09-23","activity_kind":"strength","slot_key":"alpha","reason":"Explicit reissue","revisit_on":"2026-09-24","replace_cancelled_session_id":"c0a9df15-0bd2-4389-8c36-4438705b47c2","request_id":"9fd14865-c3a9-444a-94b9-7634839d0c19","expected_state_version":4,"expected_evidence_version":3}' ],
+    queryOptions: undefined
+  }
+
+test at tests/review-regressions.spec.ts:138:3
+✖ R4 activation-cancelled phase can reissue; actual work or freeform/uncancelled intent cannot be overwritten (880.428283ms)
+  error: INVALID_INPUT_FIELDS
+      at Ie.la (/home/fzicat/projects/healthspan-training-planning/node_modules/@electric-sql/pglite/dist/index.cjs:4:22506)
+      at Ie.Qa (/home/fzicat/projects/healthspan-training-planning/node_modules/@electric-sql/pglite/dist/index.cjs:4:19876)
+      at Ie.parse (/home/fzicat/projects/healthspan-training-planning/node_modules/@electric-sql/pglite/dist/index.cjs:4:18520)
+      at _e.Ia (/home/fzicat/projects/healthspan-training-planning/node_modules/@electric-sql/pglite/dist/index.cjs:15:1788)
+      at <anonymous> (/home/fzicat/projects/healthspan-training-planning/node_modules/@electric-sql/pglite/dist/index.cjs:15:1161)
+      at wasm://wasm/0267bb86:wasm-function[10930]:0x5a5ccf
+      at wasm://wasm/0267bb86:wasm-function[3585]:0x27eaeb
+      at wasm://wasm/0267bb86:wasm-function[3627]:0x2869d1
+      at wasm://wasm/0267bb86:wasm-function[3637]:0x286c2d
+      at wasm://wasm/0267bb86:wasm-function[9914]:0x54fd4d {
+    length: 573,
+    severity: 'ERROR',
+    code: 'P0001',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: `PL/pgSQL function training_fail(text) line 1 at RAISE\nSQL statement "SELECT public.training_fail('INVALID_INPUT_FIELDS')"\nPL/pgSQL function training_keys(jsonb,text[]) line 3 at PERFORM\nSQL statement "SELECT public.training_keys(p_input,ARRAY['request_id','expected_state_version','expected_evidence_version','target_date','activity_kind','slot_key','reason','revisit_on','exercises','duration_minutes','intensity'])"\nPL/pgSQL function materialize_training_session(jsonb) line 4 at PERFORM`,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'pl_exec.c',
+    line: '3923',
+    routine: 'exec_stmt_raise',
+    query: 'SELECT public."materialize_training_session"($1::jsonb) AS result',
+    params: [ '{"target_date":"2026-09-23","activity_kind":"strength","slot_key":"alpha","reason":"Synthetic intent","revisit_on":"2026-09-24","replace_cancelled_session_id":"6400d999-2aec-4a39-a12c-e5d49b548acf","expected_state_version":5,"expected_evidence_version":3,"request_id":"70179221-c075-4079-9529-b8a4550c654d"}' ],
+    queryOptions: undefined
+  }

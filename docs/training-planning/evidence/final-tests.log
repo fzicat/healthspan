@@ -2,10 +2,10 @@
 > healthspan@0.1.0 test:training
 > tsx --test tests/dates.test.ts && npm run test:training:sql && npm --prefix mcp-server test && npm run test:training:protocol && npm run test:training:native
 
-✔ literal calendar dates reject malformed and nonexistent values (0.846118ms)
-✔ Montreal spring/fall boundaries use 23/25 hours, not fixed-day arithmetic (9.173208ms)
-✔ explicit non-default IANA zones ignore device/server timezone (0.794701ms)
-✔ invalid timezone and skipped local calendar date are explicit errors (0.366728ms)
+✔ literal calendar dates reject malformed and nonexistent values (0.848712ms)
+✔ Montreal spring/fall boundaries use 23/25 hours, not fixed-day arithmetic (8.195353ms)
+✔ explicit non-default IANA zones ignore device/server timezone (0.791765ms)
+✔ invalid timezone and skipped local calendar date are explicit errors (0.379161ms)
 ℹ tests 4
 ℹ suites 0
 ℹ pass 4
@@ -13,11 +13,30 @@
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 122.576369
+ℹ duration_ms 82.991222
 
 > healthspan@0.1.0 test:training:sql
-> node supabase/tests/training-planning.mjs && node supabase/tests/extended-training.mjs && node supabase/tests/automatic-training.mjs && node supabase/tests/runbook.mjs
+> tsx --test tests/review-regressions.spec.ts && node supabase/tests/training-planning.mjs && node supabase/tests/extended-training.mjs && node supabase/tests/automatic-training.mjs && node supabase/tests/runbook.mjs
 
+✔ A10 authored out-of-order advance follows the completed slot through a complete cycle (1248.900205ms)
+✔ A14 read synchronizes a reached deviation revisit once, and bounded handling does not expire authority (936.267171ms)
+✔ R1 effective day confirmation resets spacing; correction never overrides real sets (901.894812ms)
+✔ R1 unknown regional day load blocks only dependent rules across revision changes (860.432704ms)
+✔ R5 latest corrected report removes phantom work but retains history and nonqualifying actual load (898.031235ms)
+✔ R5 evidence-scoped resolutions and changed load/date: stale resolutions never erase new work or raw sets (1032.664882ms)
+✔ R2 exact cardio proposal and deliberate corrected reference; owner-only and mismatched references rejected (914.595627ms)
+✔ R3 logged primary cardio exposes precise association, never auto-links and rejects duplicate reuse (883.136844ms)
+✔ R4 explicit cancelled reissue reuses dated workout, keeps snapshots and exact replay, never credits intent (932.795328ms)
+✔ R4 no-spacing plan still refuses actual work, freeform workout and foreign/date targets (911.166434ms)
+✔ R4 activation-cancelled phase can reissue; actual work or freeform/uncancelled intent cannot be overwritten (987.006903ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10732.031381
 ok 1 - unprovisioned does not claim athlete
 ok 2 - immutable proposal created
 ok 3 - rejects INVALID_DATE
@@ -135,10 +154,10 @@ ok 9 - exact four once-only migrations in filename order
 SOURCE 202609220001_training_planning.sql a1186e1525861da430961f15ed5cfa38b1225b5ec6b7d5c7884c137b02b3792b
 ok 10 - 202609220001_training_planning.sql: four RLS tables deny application table and column access at COMMIT
 ok 11 - 202609220001_training_planning.sql: all feature functions sealed at COMMIT despite permissive fixture defaults
-SOURCE 202609220002_training_engine.sql 8658d7408cae98a8f9f583bf81df61216f6a0b3b8c931af7f42eeea68920e550
+SOURCE 202609220002_training_engine.sql cdab4741d452b0063070dca993ff9036c47646888a8cbaf3493dcb8c618ae9b7
 ok 12 - 202609220002_training_engine.sql: four RLS tables deny application table and column access at COMMIT
 ok 13 - 202609220002_training_engine.sql: all feature functions sealed at COMMIT despite permissive fixture defaults
-SOURCE 202609220003_training_rpcs.sql f0c8518b0d2d8d8459296b83bfc4e075e7707ab3b6485d3ec0ea18fe71458d2b
+SOURCE 202609220003_training_rpcs.sql 81e74a26cd101821724bd711f672f1905c30b73147ebd66bd20b896fe8765fb8
 ok 14 - 202609220003_training_rpcs.sql: four RLS tables deny application table and column access at COMMIT
 ok 15 - 202609220003_training_rpcs.sql: all feature functions sealed at COMMIT despite permissive fixture defaults
 SOURCE 202609220004_training_grants.sql 27da6867a02279d3817e0f482488a6a5f9857fa33d06ab2ca88c395854a6c3a8
@@ -200,24 +219,24 @@ CLEANUP in-memory PGlite closed; no listener or database directory created
 > healthspan-mcp-server@0.1.0 test
 > HSPAN_MCP_NO_DOTENV=1 tsx --test src/**/*.test.ts
 
-✔ receipt expires at 15 minutes or athlete-local midnight, not UTC midnight (10.69364ms)
-✔ receipt cannot survive connection, configured athlete, captured version or occurrence changes (0.481633ms)
-✔ ineligible activity gets no materialization capability while eligible alternatives remain available (0.397535ms)
-✔ committed retry replays after expiry, local rollover and restart without executing SQL again (33.110813ms)
-✔ unknown counts, changing pages and source failures never advertise complete evidence (0.290234ms)
-✔ public discovery exposes coach tools, not owner authority, and matches wire fields (294.497284ms)
-✔ all four legacy routes require context and explicit mode during active, including freeform (358.242582ms)
-✔ all four legacy routes require context and explicit mode during paused, including freeform (345.006623ms)
-✔ connection, target, occurrence and version scopes cannot be substituted (604.280191ms)
-✔ owner configuration is explicit and must match; missing context never falls back (903.62605ms)
-✔ incomplete and unsupported contexts grant no authority or automatic fallback (322.793765ms)
-✔ inactive unlinked compatibility is labeled; paused and archived linked targets stay protected (325.618914ms)
-✔ due review is not expiry; rest intent and proposals use exact RPC envelopes and readback (323.493557ms)
-✔ SQL safety errors propagate for every route, with no direct or freeform retry (360.771035ms)
-✔ exercise creation invalidates receipts, without granting anchor approval (325.173428ms)
-✔ invalid dates and past prescription edits reject, including owning-date routes (319.233506ms)
-✔ day reads keep unplanned archived-library sets, null metrics and DST-local half-open bounds (320.556097ms)
-✔ server-capped evidence pages are explicitly incomplete; day reads follow every page (313.418297ms)
+✔ receipt expires at 15 minutes or athlete-local midnight, not UTC midnight (11.354359ms)
+✔ receipt cannot survive connection, configured athlete, captured version or occurrence changes (0.495509ms)
+✔ ineligible activity gets no materialization capability while eligible alternatives remain available (0.370595ms)
+✔ committed retry replays after expiry, local rollover and restart without executing SQL again (32.20864ms)
+✔ unknown counts, changing pages and source failures never advertise complete evidence (0.282279ms)
+✔ public discovery exposes coach tools, not owner authority, and matches wire fields (286.521932ms)
+✔ all four legacy routes require context and explicit mode during active, including freeform (347.881406ms)
+✔ all four legacy routes require context and explicit mode during paused, including freeform (358.537847ms)
+✔ connection, target, occurrence and version scopes cannot be substituted (607.923786ms)
+✔ owner configuration is explicit and must match; missing context never falls back (918.949324ms)
+✔ incomplete and unsupported contexts grant no authority or automatic fallback (326.458369ms)
+✔ inactive unlinked compatibility is labeled; paused and archived linked targets stay protected (323.153981ms)
+✔ due review is not expiry; rest intent and proposals use exact RPC envelopes and readback (318.755028ms)
+✔ SQL safety errors propagate for every route, with no direct or freeform retry (356.541431ms)
+✔ exercise creation invalidates receipts, without granting anchor approval (324.84387ms)
+✔ invalid dates and past prescription edits reject, including owning-date routes (325.06236ms)
+✔ day reads keep unplanned archived-library sets, null metrics and DST-local half-open bounds (321.401693ms)
+✔ server-capped evidence pages are explicitly incomplete; day reads follow every page (311.233058ms)
 ℹ tests 18
 ℹ suites 0
 ℹ pass 18
@@ -225,66 +244,68 @@ CLEANUP in-memory PGlite closed; no listener or database directory created
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 5362.018488
+ℹ duration_ms 5376.053476
 
 > healthspan@0.1.0 test:training:protocol
 > tsx --test tests/mcp-database.spec.ts tests/mcp-safety.spec.ts
 
-✔ adapter verifies signed roles, retains browser cookies, and refuses unsupported REST (1327.636125ms)
-✔ fresh public discovery and real SQL schema, immutable coach proposal, owner activation, materialization and restart replay (1764.593928ms)
-✔ all four real SQL legacy routes require fresh explicit freeform during active; actual evidence invalidates (1784.369294ms)
-✔ all four real SQL legacy routes require fresh explicit freeform during paused; actual evidence invalidates (1718.343607ms)
-✔ real resistance spacing survives active freeform rename; relabeling cannot bypass and active rest remains eligible (1437.711443ms)
-✔ real resistance spacing survives paused freeform rename; relabeling cannot bypass and active rest remains eligible (1431.863634ms)
-✔ known production defect: absent migration rejects ordinary legacy planning instead of compatibility (1054.441923ms)
+✔ adapter verifies signed roles, retains browser cookies, and refuses unsupported REST (1313.20846ms)
+✔ fresh public discovery and real SQL schema, immutable coach proposal, owner activation, materialization and restart replay (1775.383688ms)
+✔ R4 public MCP discovers explicit reissue, requires owner cancellation, then replays and reads immutable history (1444.059361ms)
+✔ R1/R5 public MCP reads effective actual evidence and refuses prescriptions, not independent recovery intent (1476.586899ms)
+✔ all four real SQL legacy routes require fresh explicit freeform during active; actual evidence invalidates (1677.827424ms)
+✔ all four real SQL legacy routes require fresh explicit freeform during paused; actual evidence invalidates (1716.018616ms)
+✔ real resistance spacing survives active freeform rename; relabeling cannot bypass and active rest remains eligible (1415.219291ms)
+✔ real resistance spacing survives paused freeform rename; relabeling cannot bypass and active rest remains eligible (1420.205975ms)
+✔ known production defect: absent migration rejects ordinary legacy planning instead of compatibility (1080.720679ms)
 ▶ F1 cardio stop rejects all four active freeform routes (cardio-only content)
-  ✔ create_or_update_workout (42.8275ms)
-  ✔ add_workout_exercise (32.258803ms)
-  ✔ update_workout_exercise (32.801392ms)
-  ✔ remove_workout_exercise (34.772338ms)
-✔ F1 cardio stop rejects all four active freeform routes (cardio-only content) (2130.000469ms)
+  ✔ create_or_update_workout (41.783482ms)
+  ✔ add_workout_exercise (32.052918ms)
+  ✔ update_workout_exercise (34.685386ms)
+  ✔ remove_workout_exercise (32.252462ms)
+✔ F1 cardio stop rejects all four active freeform routes (cardio-only content) (2138.282364ms)
 ▶ F1 cardio stop rejects all four active freeform routes (mixed content)
-  ✔ create_or_update_workout (42.22494ms)
-  ✔ add_workout_exercise (31.354007ms)
-  ✔ update_workout_exercise (34.386615ms)
-  ✔ remove_workout_exercise (31.827725ms)
-✔ F1 cardio stop rejects all four active freeform routes (mixed content) (1667.300937ms)
+  ✔ create_or_update_workout (42.988262ms)
+  ✔ add_workout_exercise (33.037985ms)
+  ✔ update_workout_exercise (35.386661ms)
+  ✔ remove_workout_exercise (34.139752ms)
+✔ F1 cardio stop rejects all four active freeform routes (mixed content) (1743.599244ms)
 ▶ F1 cardio stop rejects all four paused freeform routes (cardio-only content)
-  ✔ create_or_update_workout (36.006013ms)
-  ✔ add_workout_exercise (35.074435ms)
-  ✔ update_workout_exercise (34.982042ms)
-  ✔ remove_workout_exercise (32.95529ms)
-✔ F1 cardio stop rejects all four paused freeform routes (cardio-only content) (1604.212169ms)
+  ✔ create_or_update_workout (38.433697ms)
+  ✔ add_workout_exercise (29.593615ms)
+  ✔ update_workout_exercise (32.643085ms)
+  ✔ remove_workout_exercise (33.133224ms)
+✔ F1 cardio stop rejects all four paused freeform routes (cardio-only content) (1620.474196ms)
 ▶ F1 cardio stop rejects all four paused freeform routes (mixed content)
-  ✔ create_or_update_workout (43.187886ms)
-  ✔ add_workout_exercise (34.717385ms)
-  ✔ update_workout_exercise (41.291739ms)
-  ✔ remove_workout_exercise (35.915223ms)
-✔ F1 cardio stop rejects all four paused freeform routes (mixed content) (1605.110995ms)
-✔ F2 actual unlinked nonqualifying upper work blocks SQL and public MCP materialization (1276.565352ms)
+  ✔ create_or_update_workout (34.517711ms)
+  ✔ add_workout_exercise (29.723688ms)
+  ✔ update_workout_exercise (32.543087ms)
+  ✔ remove_workout_exercise (31.308171ms)
+✔ F1 cardio stop rejects all four paused freeform routes (mixed content) (1626.255541ms)
+✔ F2 actual unlinked nonqualifying upper work blocks SQL and public MCP materialization (1349.532159ms)
 ▶ F2 freeform candidate keeps upper classification on all four active routes
-  ✔ create_or_update_workout (61.643787ms)
-  ✔ add_workout_exercise (41.763945ms)
-  ✔ update_workout_exercise (48.265852ms)
-  ✔ remove_workout_exercise (37.245618ms)
-✔ F2 freeform candidate keeps upper classification on all four active routes (1489.5201ms)
+  ✔ create_or_update_workout (49.511699ms)
+  ✔ add_workout_exercise (37.748983ms)
+  ✔ update_workout_exercise (38.944826ms)
+  ✔ remove_workout_exercise (37.779069ms)
+✔ F2 freeform candidate keeps upper classification on all four active routes (1481.887793ms)
 ▶ F2 freeform candidate keeps upper classification on all four paused routes
-  ✔ create_or_update_workout (39.150542ms)
-  ✔ add_workout_exercise (34.1118ms)
-  ✔ update_workout_exercise (36.423917ms)
-  ✔ remove_workout_exercise (33.015093ms)
-✔ F2 freeform candidate keeps upper classification on all four paused routes (1444.253947ms)
-✔ F2 activated history classifies exact slot and equivalent IDs across phase changes and library relabeling (1351.877378ms)
-✔ F2 unknown preceding regional load fails closed without treating it as upper; proposals cannot classify it (1280.579532ms)
-✔ F2 unknown candidate is blocked only when regional spacing depends on it; known lower is independent (1337.542698ms)
-ℹ tests 41
+  ✔ create_or_update_workout (44.385692ms)
+  ✔ add_workout_exercise (40.547412ms)
+  ✔ update_workout_exercise (54.12356ms)
+  ✔ remove_workout_exercise (48.770538ms)
+✔ F2 freeform candidate keeps upper classification on all four paused routes (1542.93445ms)
+✔ F2 activated history classifies exact slot and equivalent IDs across phase changes and library relabeling (1477.367363ms)
+✔ F2 unknown preceding regional load fails closed without treating it as upper; proposals cannot classify it (1257.829145ms)
+✔ F2 unknown candidate is blocked only when regional spacing depends on it; known lower is independent (1327.051148ms)
+ℹ tests 43
 ℹ suites 0
-ℹ pass 41
+ℹ pass 43
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 15516.423617
+ℹ duration_ms 15884.776916
 
 > healthspan@0.1.0 test:training:native
 > node --import tsx tests/native-training.mts
@@ -294,44 +315,50 @@ locale: Cannot set LC_MESSAGES to default locale: No such file or directory
 locale: Cannot set LC_COLLATE to default locale: No such file or directory
 locale: Cannot set LC_MESSAGES to default locale: No such file or directory
 locale: Cannot set LC_COLLATE to default locale: No such file or directory
-START 2026-09-23T00:36:49.627Z; loopback 127.0.0.1:43467
+START 2026-09-23T12:33:55.323Z; loopback 127.0.0.1:46133
 SOURCE supabase/schema.sql ea0294bf8ebfa347ca8d540864bf757c240e6f1a24415ecc406a6635ff12f6dd
 SOURCE supabase/migrations/202609220001_training_planning.sql a1186e1525861da430961f15ed5cfa38b1225b5ec6b7d5c7884c137b02b3792b
-SOURCE supabase/migrations/202609220002_training_engine.sql 8658d7408cae98a8f9f583bf81df61216f6a0b3b8c931af7f42eeea68920e550
-SOURCE supabase/migrations/202609220003_training_rpcs.sql f0c8518b0d2d8d8459296b83bfc4e075e7707ab3b6485d3ec0ea18fe71458d2b
+SOURCE supabase/migrations/202609220002_training_engine.sql cdab4741d452b0063070dca993ff9036c47646888a8cbaf3493dcb8c618ae9b7
+SOURCE supabase/migrations/202609220003_training_rpcs.sql 81e74a26cd101821724bd711f672f1905c30b73147ebd66bd20b896fe8765fb8
 SOURCE supabase/migrations/202609220004_training_grants.sql 27da6867a02279d3817e0f482488a6a5f9857fa33d06ab2ca88c395854a6c3a8
 ok 1 - restricted non-superuser schema administrator applies all four real migrations
-BARRIER [{"pid":599839,"blockers":[599838],"wait_event_type":"Lock","wait_event":"transactionid"}]
-BARRIER [{"pid":599839,"blockers":[599838],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":599840,"blockers":[599839],"wait_event_type":"Lock","wait_event":"tuple"}]
-ok 2 - A20/A32 simultaneous identical request: one receipt/session/workout/prescription
-BARRIER [{"pid":599839,"blockers":[599838],"wait_event_type":"Lock","wait_event":"transactionid"}]
-BARRIER [{"pid":599839,"blockers":[599838],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":599840,"blockers":[599839],"wait_event_type":"Lock","wait_event":"tuple"}]
-ok 3 - A20/A32 distinct concurrent keys on one expected version: one commit, one VERSION_CONFLICT
-BARRIER [{"pid":599839,"blockers":[599838],"wait_event_type":"Lock","wait_event":"transactionid"}]
-BARRIER [{"pid":599839,"blockers":[599838],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":599840,"blockers":[599839],"wait_event_type":"Lock","wait_event":"tuple"}]
-ok 4 - activation versus materialization (first=0): no partial authority/intent
-BARRIER [{"pid":599840,"blockers":[599838],"wait_event_type":"Lock","wait_event":"transactionid"}]
-BARRIER [{"pid":599839,"blockers":[599840],"wait_event_type":"Lock","wait_event":"tuple"},{"pid":599840,"blockers":[599838],"wait_event_type":"Lock","wait_event":"transactionid"}]
-ok 5 - activation versus materialization (first=1): no partial authority/intent
-BARRIER [{"pid":599839,"blockers":[599838],"wait_event_type":"Lock","wait_event":"transactionid"}]
-BARRIER [{"pid":599839,"blockers":[599838],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":599840,"blockers":[599839],"wait_event_type":"Lock","wait_event":"tuple"}]
-ok 6 - activation versus qualifying reconciliation (first=0): no double credit
-BARRIER [{"pid":599840,"blockers":[599838],"wait_event_type":"Lock","wait_event":"transactionid"}]
-BARRIER [{"pid":599839,"blockers":[599840],"wait_event_type":"Lock","wait_event":"tuple"},{"pid":599840,"blockers":[599838],"wait_event_type":"Lock","wait_event":"transactionid"}]
-ok 7 - activation versus qualifying reconciliation (first=1): no double credit
-BARRIER [{"pid":599839,"blockers":[599838],"wait_event_type":"Lock","wait_event":"transactionid"}]
-BARRIER [{"pid":599839,"blockers":[599838],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":599840,"blockers":[599839],"wait_event_type":"Lock","wait_event":"tuple"}]
-ok 8 - concurrent same-occurrence reconciliations advance exactly once, including fresh retry
-ok 9 - raw evidence committed after context: stale mutation rejects without partial intent
-BARRIER [{"pid":599840,"blockers":[599839],"wait_event_type":"Lock","wait_event":"transactionid"}]
-ok 10 - evidence triggers serialize concurrent raw writers; rollback restores version and raw row
-ok 11 - all seven legacy evidence sources increment versions on INSERT/UPDATE/DELETE
-BARRIER [{"pid":599840,"blockers":[599839],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":621180,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":621180,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":621181,"blockers":[621180],"wait_event_type":"Lock","wait_event":"tuple"}]
+ok 2 - R4 overlapping cancelled reissue (same key=true) preserves one new occurrence and original snapshot
+BARRIER [{"pid":621180,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":621180,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":621181,"blockers":[621180],"wait_event_type":"Lock","wait_event":"tuple"}]
+ok 3 - R4 overlapping cancelled reissue (same key=false) preserves one new occurrence and original snapshot
+BARRIER [{"pid":621180,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":621180,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":621181,"blockers":[621180],"wait_event_type":"Lock","wait_event":"tuple"}]
+ok 4 - A20/A32 simultaneous identical request: one receipt/session/workout/prescription
+BARRIER [{"pid":621180,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":621180,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":621181,"blockers":[621180],"wait_event_type":"Lock","wait_event":"tuple"}]
+ok 5 - A20/A32 distinct concurrent keys on one expected version: one commit, one VERSION_CONFLICT
+BARRIER [{"pid":621180,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":621180,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":621181,"blockers":[621180],"wait_event_type":"Lock","wait_event":"tuple"}]
+ok 6 - activation versus materialization (first=0): no partial authority/intent
+BARRIER [{"pid":621181,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":621180,"blockers":[621181],"wait_event_type":"Lock","wait_event":"tuple"},{"pid":621181,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"}]
+ok 7 - activation versus materialization (first=1): no partial authority/intent
+BARRIER [{"pid":621180,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":621180,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":621181,"blockers":[621180],"wait_event_type":"Lock","wait_event":"tuple"}]
+ok 8 - activation versus qualifying reconciliation (first=0): no double credit
+BARRIER [{"pid":621181,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":621180,"blockers":[621181],"wait_event_type":"Lock","wait_event":"tuple"},{"pid":621181,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"}]
+ok 9 - activation versus qualifying reconciliation (first=1): no double credit
+BARRIER [{"pid":621180,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":621180,"blockers":[621179],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":621181,"blockers":[621180],"wait_event_type":"Lock","wait_event":"tuple"}]
+ok 10 - concurrent same-occurrence reconciliations advance exactly once, including fresh retry
+ok 11 - raw evidence committed after context: stale mutation rejects without partial intent
+BARRIER [{"pid":621181,"blockers":[621180],"wait_event_type":"Lock","wait_event":"transactionid"}]
+ok 12 - evidence triggers serialize concurrent raw writers; rollback restores version and raw row
+ok 13 - all seven legacy evidence sources increment versions on INSERT/UPDATE/DELETE
+BARRIER [{"pid":621181,"blockers":[621180],"wait_event_type":"Lock","wait_event":"transactionid"}]
 DEADLOCK {"victim":"planner","sqlstate":"40P01","explicitFreshRetry":true}
-ok 12 - real lock inversion deadlock: 40P01 rollback, context refresh/retry, no partial or double credit
-ok 13 - real login roles: owner permitted; other user/anon and role-claim mismatches denied
-ok 14 - service-role coach cannot activate, change lifecycle, confirm owner evidence, or forge actor fields
-ok 15 - planning tables, helper execution, history mutation, and schema-create are denied at SQL ACLs
-ok 16 - fixed SECURITY DEFINER paths resist caller temporary-table shadowing
+ok 14 - real lock inversion deadlock: 40P01 rollback, context refresh/retry, no partial or double credit
+ok 15 - real login roles: owner permitted; other user/anon and role-claim mismatches denied
+ok 16 - service-role coach cannot activate, change lifecycle, confirm owner evidence, or forge actor fields
+ok 17 - planning tables, helper execution, history mutation, and schema-create are denied at SQL ACLs
+ok 18 - fixed SECURITY DEFINER paths resist caller temporary-table shadowing
 CLEANUP listener closed; 17 tracked PIDs exited; disposable data removed
-RESULT 16 passed; 0 failed; native PostgreSQL; cleanup=true
+RESULT 18 passed; 0 failed; native PostgreSQL; cleanup=true
