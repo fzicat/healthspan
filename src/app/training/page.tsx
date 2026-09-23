@@ -104,6 +104,8 @@ function IntentActions({ context, refresh, isOwner }: { context: TrainingContext
     const [revisit, setRevisit] = useState('')
     const [duration, setDuration] = useState('')
     const [intensity, setIntensity] = useState('')
+    const [replacement, setReplacement] = useState('')
+    const cancelled = context.sessions.filter(session => session.cancelled && session.workout_id && session.planned_date === date)
     const [error, setError] = useState('')
     const supportiveCardio = kind === 'cardio' && !slot
     const constraints = record(record(context.direction?.delegation).supportive_constraints)
@@ -117,12 +119,13 @@ function IntentActions({ context, refresh, isOwner }: { context: TrainingContext
             return
         }
         setError('')
-        void action.run('materialize_training_session', { target_date: date, activity_kind: kind, ...(slot ? { slot_key: slot } : {}), ...(supportiveCardio ? { duration_minutes: Number(duration), intensity: Number(intensity) } : {}), reason, revisit_on: revisit })
+        void action.run('materialize_training_session', { target_date: date, activity_kind: kind, ...(slot ? { slot_key: slot } : {}), ...(replacement ? { replace_cancelled_session_id: replacement } : {}), ...(supportiveCardio ? { duration_minutes: Number(duration), intensity: Number(intensity) } : {}), reason, revisit_on: revisit })
     }}>
         <p className="text-sm text-muted-foreground">The server rechecks current evidence, spacing, stop conditions and delegation. This creates intent only, never logs or exposure credit. Supportive work retains the pending resistance slot.</p>
-        <label className="block text-sm">Date<input type="date" required min={context.today} className={trainingInput} value={date} onChange={event => setDate(event.target.value)} /></label>
+        <label className="block text-sm">Date<input type="date" required min={context.today} className={trainingInput} value={date} onChange={event => { setDate(event.target.value); setReplacement('') }} /></label>
         <label className="block text-sm">Activity<select aria-label="Activity" required className={trainingInput} value={kind} onChange={event => { setKind(event.target.value); setSlot(''); setError('') }}><option value="">Choose intentionally</option>{['strength', 'cardio', 'mobility', 'rest'].map(activity => <option key={activity} value={activity}>{human(activity)}</option>)}</select></label>
         <label className="block text-sm">Primary slot or supportive intent<select className={trainingInput} value={slot} onChange={event => { setSlot(event.target.value); setError('') }} required={kind === 'strength'}><option value="">Supportive intent (no resistance credit)</option>{rows(context.direction?.sequence).filter(item => item.activity_kind === kind).map(item => <option key={text(item.key)} value={text(item.key)}>{text(item.key)} · {text(item.purpose)}</option>)}</select></label>
+        {cancelled.length > 0 && <label className="block text-sm">Explicitly reissue cancelled intent<select className={trainingInput} value={replacement} onChange={event => setReplacement(event.target.value)}><option value="">Do not replace an existing dated workout</option>{cancelled.map(session => <option key={session.id} value={session.id}>{session.slot_key || session.activity_kind} · {session.id}</option>)}</select><span className="text-xs text-muted-foreground">Only unperformed, cancelled intent can be reissued. The dated workout is reused; original snapshots and all actual evidence stay on their original occurrences. Current recovery and authority still apply.</span></label>}
         {supportiveCardio && <fieldset className="space-y-3">
             <legend className="font-medium">Supportive cardio prescription</legend>
             <p id="supportive-cardio-bounds" className="text-sm text-muted-foreground">Duration must be greater than 0 minutes; intensity uses a 1–10 scale. {cardioBoundsMissing ? 'Approved cardio bounds are missing; a revised delegation is needed before saving supportive cardio.' : `Approved maximum: ${maxMinutes} minutes and intensity ${maxIntensity}. These are limits, not a recommended dose.`}</p>

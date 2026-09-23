@@ -124,7 +124,7 @@ export async function trainingOwner(): Promise<string | null> {
 
 export function sessionForWorkout(context: TrainingContextData | null, workoutId: number | null): TrainingSession | null {
     if (!context || !workoutId) return null
-    const matching = context.sessions.filter(session => session.workout_id === workoutId)
+    const matching = context.sessions.filter(session => session.workout_id === workoutId && !session.cancelled)
     return matching.length === 1 ? matching[0] : null
 }
 // Explicit route occurrence + frozen exercise membership, not date/name matching.

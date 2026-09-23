@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:training:sql": "node supabase/tests/training-planning.mjs && node supabase/tests/extended-training.mjs && node supabase/tests/automatic-training.mjs && node supabase/tests/runbook.mjs",
+    "test:training:sql": "tsx --test tests/review-regressions.spec.ts && node supabase/tests/training-planning.mjs && node supabase/tests/extended-training.mjs && node supabase/tests/automatic-training.mjs && node supabase/tests/runbook.mjs",
     "test:training:protocol": "tsx --test tests/mcp-database.spec.ts tests/mcp-safety.spec.ts",
     "test:training:native": "node --import tsx tests/native-training.mts",
     "test:training:browser": "tsx tests/training-planning.spec.ts",

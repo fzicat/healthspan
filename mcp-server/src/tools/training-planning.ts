@@ -237,6 +237,7 @@ export function registerTrainingTools(server: McpServer, planning: TrainingPlann
     description: "Atomically save eligible dated strength/cardio/mobility/rest intent and its frozen context. Supportive intent need not contain exercises or consume the pending resistance slot. SQL rechecks actual-load spacing and review handling; a label cannot bypass it. Read back the returned session/request ID.",
     inputSchema: { ...mutationSchema, target_date: dateSchema, activity_kind: activity, slot_key: text.optional(),
       reason: text, revisit_on: dateSchema, exercises: z.array(exercise).optional(),
+      replace_cancelled_session_id: uuid.optional().describe("Explicitly reissue this already owner-cancelled, unperformed dated workout. Reuses only its dated container, not snapshot/evidence/credit; fresh spacing and scope checks still apply."),
       duration_minutes: z.number().positive().optional(), intensity: z.number().min(1).max(10).optional() },
   }, async (args) => toolResult(await planning.mutate("materialize_training_session", args)));
   server.registerTool("get_training_request", {

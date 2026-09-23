@@ -84,7 +84,7 @@ BEGIN
  SELECT jsonb_build_object('event_id',e.id,'source_event_id',e.id,'based_on_versions',e.payload->'based_on_versions','stale',e.revision_id IS DISTINCT FROM st.active_revision_id OR (e.payload#>>'{based_on_versions,state}')::bigint IS DISTINCT FROM st.state_version OR (e.payload#>>'{based_on_versions,evidence}')::bigint IS DISTINCT FROM st.evidence_version)||e.payload INTO rec FROM public.training_plan_events e WHERE e.kind='recommendation' AND e.payload->>'target_date'=d::text ORDER BY e.occurred_at DESC,e.id DESC LIMIT 1;
  SELECT to_jsonb(x)||jsonb_build_object('exercises',public.training_workout_content(x.id)) INTO w FROM public.workouts x WHERE x.date=d;
  reviews:=public.training_review();
- RETURN jsonb_build_object('schema_version',1,'status',CASE WHEN st.active_revision_id IS NULL THEN 'inactive' ELSE 'ready' END,'athlete_timezone',st.athlete_timezone,'today',today,'target_date',d,'versions',jsonb_build_object('state',st.state_version,'evidence',st.evidence_version),'authority',jsonb_build_object('owner_user_id',st.owner_user_id,'revision_id',st.active_revision_id,'activation_event_id',act,'lifecycle',st.lifecycle,'authorized_through',c#>'{block,authorized_through}'),'direction',c,'queue',queue,'activity_eligibility',activities,'recommended_today',rec,'needs_coach_decision',rec IS NULL OR coalesce((rec->>'stale')::boolean,false),'review',reviews,'can_prescribe_under_current_direction',can,'blocking_reasons',blockers,'target_conflict',CASE WHEN EXISTS(SELECT 1 FROM public.training_session_contexts WHERE workout_id=(w->>'id')::int) THEN w ELSE NULL END,'target_day_reservation',w,'sessions',sessions,'recent_phases',revisions,'recent_phases_complete',true,'proposals',(SELECT coalesce(jsonb_agg(r),'[]') FROM jsonb_array_elements(revisions) r WHERE NOT EXISTS(SELECT 1 FROM public.training_plan_events e WHERE e.revision_id=(r->>'id')::uuid AND e.kind IN ('activation','rejection'))),'evidence',jsonb_build_object('complete',true,'queue_history_complete',true,'window','all retained records','sets',rawsets,'unlinked_sets',(SELECT coalesce(jsonb_agg(x),'[]') FROM jsonb_array_elements(rawsets) x WHERE x->>'training_session_id' IS NULL),'cardio_sessions',(SELECT coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.date,x.id),'[]') FROM public.cardio_sessions x WHERE NOT x.is_deleted),'daily_logs',(SELECT coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.date),'[]') FROM public.daily_logs x),'breathwork_sessions',(SELECT coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.date,x.id),'[]') FROM public.breathwork_sessions x WHERE NOT x.is_deleted),'pending_qualifiers',(SELECT coalesce(jsonb_agg(jsonb_build_object('session_id',x->>'id','missing_qualifiers',x#>'{evaluation,missing_qualifiers}')),'[]') FROM jsonb_array_elements(sessions) x WHERE x#>>'{evaluation,qualification}'='pending'),'readiness_missingness','Absent observations are unknown; spacing does not certify recovery'),'reserved_load',(SELECT coalesce(jsonb_agg(x),'[]') FROM jsonb_array_elements(sessions) x WHERE x->>'origin'='prescribed' AND x->>'planned_date'>=today::text AND NOT (x->>'cancelled')::boolean));
+ RETURN jsonb_build_object('schema_version',1,'status',CASE WHEN st.active_revision_id IS NULL THEN 'inactive' ELSE 'ready' END,'athlete_timezone',st.athlete_timezone,'today',today,'target_date',d,'versions',jsonb_build_object('state',st.state_version,'evidence',st.evidence_version),'authority',jsonb_build_object('owner_user_id',st.owner_user_id,'revision_id',st.active_revision_id,'activation_event_id',act,'lifecycle',st.lifecycle,'authorized_through',c#>'{block,authorized_through}'),'direction',c,'queue',queue,'activity_eligibility',activities,'recommended_today',rec,'needs_coach_decision',rec IS NULL OR coalesce((rec->>'stale')::boolean,false),'review',reviews,'can_prescribe_under_current_direction',can,'blocking_reasons',blockers,'target_conflict',CASE WHEN EXISTS(SELECT 1 FROM public.training_session_contexts WHERE workout_id=(w->>'id')::int) THEN w ELSE NULL END,'target_day_reservation',w,'sessions',sessions,'recent_phases',revisions,'recent_phases_complete',true,'proposals',(SELECT coalesce(jsonb_agg(r),'[]') FROM jsonb_array_elements(revisions) r WHERE NOT EXISTS(SELECT 1 FROM public.training_plan_events e WHERE e.revision_id=(r->>'id')::uuid AND e.kind IN ('activation','rejection'))),'evidence',jsonb_build_object('complete',true,'queue_history_complete',true,'window','all retained records','sets',rawsets,'unlinked_sets',(SELECT coalesce(jsonb_agg(x),'[]') FROM jsonb_array_elements(rawsets) x WHERE x->>'training_session_id' IS NULL),'cardio_sessions',(SELECT coalesce(jsonb_agg(to_jsonb(x)||jsonb_build_object('exercise_name',e.name) ORDER BY x.date,x.id),'[]') FROM public.cardio_sessions x JOIN public.exercises e ON e.id=x.exercise_id WHERE NOT x.is_deleted),'daily_logs',(SELECT coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.date),'[]') FROM public.daily_logs x),'breathwork_sessions',(SELECT coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.date,x.id),'[]') FROM public.breathwork_sessions x WHERE NOT x.is_deleted),'pending_qualifiers',(SELECT coalesce(jsonb_agg(jsonb_build_object('session_id',x->>'id','missing_qualifiers',x#>'{evaluation,missing_qualifiers}')),'[]') FROM jsonb_array_elements(sessions) x WHERE x#>>'{evaluation,qualification}'='pending'),'readiness_missingness','Absent observations are unknown; spacing does not certify recovery'),'reserved_load',(SELECT coalesce(jsonb_agg(x),'[]') FROM jsonb_array_elements(sessions) x WHERE x->>'origin'='prescribed' AND x->>'planned_date'>=today::text AND NOT (x->>'cancelled')::boolean));
 END $$;
 CREATE FUNCTION public.get_training_history(p_input jsonb DEFAULT '{}') RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE n int; events jsonb; cur public.training_plan_events; more boolean; rev uuid; sid uuid;
@@ -164,7 +164,7 @@ BEGIN
  WHEN 'reconcile' THEN ARRAY['session_id','outcome']
  WHEN 'clarify_session' THEN ARRAY['session_id','set_ids','effort_by_set','quality','continuation_dates','cardio_session_ids']
  WHEN 'propose_report' THEN ARRAY['session_id','report','proposal_event_id']
- WHEN 'confirm_report' THEN ARRAY['session_id','report','proposal_event_id','duplicate_checked']
+ WHEN 'confirm_report' THEN ARRAY['session_id','report','proposal_event_id','corrected_proposal_event_id','duplicate_checked']
  WHEN 'attribute_occurrence' THEN ARRAY['revision_id','slot_key','performed_on','set_ids','duplicate_checked','distinct_from_session_ids']
  WHEN 'confirm_day' THEN ARRAY['date','non_strength','complete']
  WHEN 'bounded_continuation' THEN ARRAY['review_event_ids','evidence','revisit_on']
@@ -226,7 +226,7 @@ BEGIN
    END LOOP;
   END IF;
   IF p?'cardio_session_ids' THEN
-   IF jsonb_typeof(p->'cardio_session_ids')<>'array' THEN PERFORM public.training_fail('INVALID_CARDIO_IDS'); END IF;
+   IF jsonb_typeof(p->'cardio_session_ids')<>'array' OR (SELECT count(*)<>count(DISTINCT value) FROM jsonb_array_elements(p->'cardio_session_ids')) THEN PERFORM public.training_fail('INVALID_CARDIO_IDS'); END IF;
    FOR x IN SELECT value FROM jsonb_array_elements(p->'cardio_session_ids') LOOP
     idn:=(x#>>'{}')::int;
     IF NOT EXISTS(SELECT 1 FROM public.cardio_sessions cs WHERE cs.id=idn AND NOT cs.is_deleted AND (cs.date=s.planned_date OR coalesce(p->'continuation_dates','[]')?cs.date::text)) OR EXISTS(SELECT 1 FROM public.training_plan_events e WHERE e.kind='clarify_session' AND e.session_id<>sid AND e.payload->'cardio_session_ids' @> jsonb_build_array(idn)) THEN PERFORM public.training_fail('INVALID_CARDIO_ASSOCIATION'); END IF;
@@ -235,7 +235,10 @@ BEGIN
   eid:=public.training_event(k,rid,sid,p); ex:=public.training_reconcile(sid);
  ELSIF k IN ('propose_report','confirm_report') THEN
   report:=p->'report'; PERFORM public.training_keys(report,ARRAY['performed_on','work','minutes','objective_met','quality','load_tags']);
-  d:=public.training_date(report->>'performed_on'); IF d<>s.planned_date OR d>today THEN PERFORM public.training_fail('INVALID_REPORT_DATE'); END IF;
+  d:=public.training_date(report->>'performed_on');
+  -- A corrected date can describe only the original date or an explicitly
+  -- declared bounded continuation; it never rewrites the frozen occurrence.
+  IF d>today OR (d<>s.planned_date AND (d<s.planned_date OR d>s.planned_date+coalesce((sl#>>'{qualification,continuation_days}')::int,0) OR NOT coalesce((SELECT payload->'continuation_dates' ? d::text FROM public.training_plan_events WHERE session_id=sid AND kind='clarify_session' ORDER BY occurred_at DESC,id DESC LIMIT 1),false))) THEN PERFORM public.training_fail('INVALID_REPORT_DATE'); END IF;
   IF report?'work' THEN
    IF jsonb_typeof(report->'work')<>'array' THEN PERFORM public.training_fail('INVALID_REPORT_WORK'); END IF;
    FOR x IN SELECT value FROM jsonb_array_elements(report->'work') LOOP
@@ -249,6 +252,7 @@ BEGIN
   IF report?'objective_met' AND jsonb_typeof(report->'objective_met')<>'boolean' THEN PERFORM public.training_fail('INVALID_REPORT_WORK'); END IF;
   IF report?'load_tags' AND NOT public.training_tags(report->'load_tags') THEN PERFORM public.training_fail('INVALID_LOAD_TAGS'); END IF;
   IF p?'proposal_event_id' AND NOT EXISTS(SELECT 1 FROM public.training_plan_events WHERE id=(p->>'proposal_event_id')::uuid AND session_id=sid AND kind='propose_report' AND payload->'report'=report) THEN PERFORM public.training_fail('INVALID_REPORT_PROPOSAL'); END IF;
+  IF p?'corrected_proposal_event_id' AND (p?'proposal_event_id' OR NOT EXISTS(SELECT 1 FROM public.training_plan_events WHERE id=(p->>'corrected_proposal_event_id')::uuid AND session_id=sid AND kind='propose_report' AND payload->'report'<>report)) THEN PERFORM public.training_fail('INVALID_REPORT_CORRECTION'); END IF;
   IF k='confirm_report' AND p->'duplicate_checked' IS DISTINCT FROM 'true'::jsonb THEN PERFORM public.training_fail('DUPLICATE_CHECK_REQUIRED'); END IF;
   eid:=public.training_event(k,rid,sid,p);
   IF k='confirm_report' THEN ex:=public.training_reconcile(sid); END IF;
@@ -306,9 +310,9 @@ BEGIN
  RETURN public.training_receipt('record_training_decision',p_input,rid,sid,jsonb_build_object('decision_event_id',eid)||ex);
 END $$;
 CREATE FUNCTION public.materialize_training_session(p_input jsonb DEFAULT '{}') RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
-DECLARE replay jsonb; st public.training_plan_state; c jsonb; sl jsonb; ex jsonb; ev jsonb; d date; today date; sid uuid; wid int; eid uuid; q jsonb; x jsonb; i int:=0; revisit date;
+DECLARE replay jsonb; st public.training_plan_state; c jsonb; sl jsonb; ex jsonb; ev jsonb; d date; today date; sid uuid; wid int; eid uuid; q jsonb; x jsonb; i int:=0; revisit date; replaced public.training_session_contexts;
 BEGIN
- PERFORM public.training_keys(p_input,ARRAY['request_id','expected_state_version','expected_evidence_version','target_date','activity_kind','slot_key','reason','revisit_on','exercises','duration_minutes','intensity']);
+ PERFORM public.training_keys(p_input,ARRAY['request_id','expected_state_version','expected_evidence_version','target_date','activity_kind','slot_key','reason','revisit_on','exercises','duration_minutes','intensity','replace_cancelled_session_id']);
  replay:=public.training_begin('materialize_training_session',p_input); IF replay IS NOT NULL THEN RETURN replay; END IF;
  SELECT * INTO st FROM public.training_plan_state WHERE id=1; SELECT content INTO c FROM public.training_plan_revisions WHERE id=st.active_revision_id;
  PERFORM public.training_reason(p_input); d:=public.training_date(p_input->>'target_date'); revisit:=public.training_date(p_input->>'revisit_on'); today:=(clock_timestamp() AT TIME ZONE st.athlete_timezone)::date;
@@ -334,9 +338,29 @@ BEGIN
   IF jsonb_typeof(p_input->'duration_minutes') IS DISTINCT FROM 'number' OR jsonb_typeof(p_input->'intensity') IS DISTINCT FROM 'number' OR (p_input->>'duration_minutes')::numeric<=0 OR (p_input->>'intensity')::numeric<1 OR (p_input->>'intensity')::numeric>10 OR c#>>'{delegation,supportive_constraints,cardio_max_minutes}' IS NULL OR c#>>'{delegation,supportive_constraints,cardio_max_intensity}' IS NULL OR (p_input->>'duration_minutes')::numeric>(c#>>'{delegation,supportive_constraints,cardio_max_minutes}')::numeric OR (p_input->>'intensity')::numeric>(c#>>'{delegation,supportive_constraints,cardio_max_intensity}')::numeric THEN PERFORM public.training_fail('OUTSIDE_DELEGATED_SCOPE'); END IF;
  END IF;
  IF EXISTS(SELECT 1 FROM public.training_session_contexts sc WHERE sc.planned_date=d AND sc.activity_kind=p_input->>'activity_kind' AND NOT EXISTS(SELECT 1 FROM public.training_plan_events e WHERE e.session_id=sc.id AND e.kind='cancel_session')) THEN PERFORM public.training_fail('WORKOUT_CONFLICT'); END IF;
+ IF p_input?'replace_cancelled_session_id' THEN
+  SELECT * INTO replaced FROM public.training_session_contexts WHERE id=(p_input->>'replace_cancelled_session_id')::uuid;
+  IF replaced.id IS NULL OR replaced.origin<>'prescribed' OR replaced.planned_date<>d OR replaced.workout_id IS NULL OR jsonb_array_length(ex)=0
+   OR NOT EXISTS(SELECT 1 FROM public.training_plan_events WHERE session_id=replaced.id AND kind='cancel_session')
+   OR EXISTS(SELECT 1 FROM public.training_session_contexts sc WHERE sc.workout_id=replaced.workout_id AND NOT EXISTS(SELECT 1 FROM public.training_plan_events e WHERE e.session_id=sc.id AND e.kind='cancel_session'))
+   OR EXISTS(SELECT 1 FROM public.training_session_contexts sc WHERE sc.workout_id=replaced.workout_id AND (sc.created_at,sc.id)>(replaced.created_at,replaced.id))
+   THEN PERFORM public.training_fail('WORKOUT_CONFLICT'); END IF;
+  SELECT id INTO wid FROM public.workouts WHERE id=replaced.workout_id AND date=d FOR UPDATE;
+  IF wid IS NULL THEN PERFORM public.training_fail('WORKOUT_CONFLICT'); END IF;
+  -- Reissue only unperformed intent. Raw work stays on its original occurrence;
+  -- neither a cancelled label nor a later phase authorizes overwriting actuals.
+  IF EXISTS(SELECT 1 FROM public.training_load_dates(st.athlete_timezone) WHERE load_date=d)
+   OR EXISTS(SELECT 1 FROM public.sets t JOIN public.training_session_contexts sc ON sc.id=t.training_session_id WHERE sc.workout_id=wid AND NOT t.is_deleted)
+   OR EXISTS(SELECT 1 FROM public.training_plan_events e JOIN public.training_session_contexts sc ON sc.id=e.session_id WHERE sc.workout_id=wid AND e.kind='reconcile' AND e.payload->>'qualification'='qualifies')
+   THEN PERFORM public.training_fail('REISSUE_ACTUAL_WORK_CONFLICT'); END IF;
+  DELETE FROM public.workouts_exercises WHERE workout_id=wid;
+  UPDATE public.workouts SET name=coalesce(sl->>'purpose',p_input->>'activity_kind'),note=p_input->>'reason' WHERE id=wid;
+ END IF;
  IF jsonb_array_length(ex)>0 THEN
-  IF EXISTS(SELECT 1 FROM public.workouts WHERE date=d) THEN PERFORM public.training_fail('WORKOUT_CONFLICT'); END IF;
-  INSERT INTO public.workouts(date,name,note) VALUES(d,coalesce(sl->>'purpose',p_input->>'activity_kind'),p_input->>'reason') RETURNING id INTO wid;
+  IF wid IS NULL THEN
+   IF EXISTS(SELECT 1 FROM public.workouts WHERE date=d) THEN PERFORM public.training_fail('WORKOUT_CONFLICT'); END IF;
+   INSERT INTO public.workouts(date,name,note) VALUES(d,coalesce(sl->>'purpose',p_input->>'activity_kind'),p_input->>'reason') RETURNING id INTO wid;
+  END IF;
   FOR x IN SELECT value FROM jsonb_array_elements(ex) LOOP
    INSERT INTO public.workouts_exercises(workout_id,exercise_id,sort_order,details,note) VALUES(wid,(x->>'exercise_id')::int,i,x->>'details',x->>'note'); i:=i+1;
   END LOOP;
@@ -344,7 +368,7 @@ BEGIN
  INSERT INTO public.training_session_contexts(revision_id,slot_key,cycle_key,planned_date,timezone,activity_kind,load_tags,resistance_slot_key,workout_id,snapshot,origin,source_state_version,source_evidence_version)
  VALUES(st.active_revision_id,sl->>'key',gen_random_uuid(),d,st.athlete_timezone,p_input->>'activity_kind',ev->'evaluated_load_tags',q->>'next_resistance_slot',wid,jsonb_build_object('slot',sl,'revision',c,'exercises',public.training_frozen_exercises(ex),'intent',p_input-ARRAY['request_id','expected_state_version','expected_evidence_version'],'prescription_fingerprint',CASE WHEN wid IS NOT NULL THEN public.training_digest(public.training_workout_content(wid)) ELSE NULL END),'prescribed',st.state_version,st.evidence_version) RETURNING id INTO sid;
  SELECT * INTO st FROM public.training_plan_state WHERE id=1;
- eid:=public.training_event('recommendation',st.active_revision_id,sid,jsonb_build_object('target_date',d,'activity_kind',p_input->>'activity_kind','reason',p_input->>'reason','revisit_on',revisit,'resistance_queue_effect','hold','eligibility',ev,'based_on_versions',jsonb_build_object('state',st.state_version+1,'evidence',st.evidence_version)));
+ eid:=public.training_event('recommendation',st.active_revision_id,sid,jsonb_build_object('replaces_cancelled_session_id',replaced.id,'target_date',d,'activity_kind',p_input->>'activity_kind','reason',p_input->>'reason','revisit_on',revisit,'resistance_queue_effect','hold','eligibility',ev,'based_on_versions',jsonb_build_object('state',st.state_version+1,'evidence',st.evidence_version)));
  RETURN public.training_receipt('materialize_training_session',p_input,st.active_revision_id,sid,jsonb_build_object('workout_id',wid,'decision_event_id',eid));
 END $$;
 CREATE FUNCTION public.mutate_training_workout(p_input jsonb DEFAULT '{}') RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$

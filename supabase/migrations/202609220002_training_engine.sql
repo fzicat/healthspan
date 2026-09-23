@@ -126,7 +126,7 @@ BEGIN
  IF resolution_payload->>'evidence_fingerprint'=evidence_fingerprint THEN resolution:=resolution_payload->>'resolution'; END IF;
  has_logs:=logged_count>0; has_report:=report IS NOT NULL;
  IF has_logs AND has_report THEN source:='mixed'; ELSIF has_report THEN source:='self_reported'; END IF;
- IF q IS NULL THEN RETURN jsonb_build_object('qualification','does_not_qualify','missing_qualifiers','[]'::jsonb,'raw_logged_set_count',logged_count,'source',source,'queue_effect','hold','fingerprint',evidence_fingerprint,'evidence_fingerprint',evidence_fingerprint,'reason','supportive_intent'); END IF;
+ IF q IS NULL THEN RETURN jsonb_build_object('qualification','does_not_qualify','missing_qualifiers','[]'::jsonb,'raw_logged_set_count',logged_count,'source',source,'queue_effect','hold','fingerprint',evidence_fingerprint,'evidence_fingerprint',evidence_fingerprint,'reason','supportive_intent','effective_report',CASE WHEN resolution='use_logs' THEN NULL ELSE report END); END IF;
  -- Every cross-date record needs explicit, bounded continuation, even if above minimum.
  FOR rowset IN SELECT t.*, (t.logged_at AT TIME ZONE s.timezone)::date AS local_on FROM public.sets t WHERE t.training_session_id=sid AND NOT t.is_deleted LOOP
   IF rowset.local_on<>s.planned_date AND (NOT(coalesce(cl->'continuation_dates','[]')?rowset.local_on::text) OR rowset.local_on<s.planned_date OR rowset.local_on>s.planned_date+(q->>'continuation_days')::int) THEN valid_dates:=false; END IF;
@@ -165,6 +165,11 @@ BEGIN
   END LOOP;
  ELSIF q->>'kind'='cardio_minutes' THEN
   SELECT coalesce(sum(duration_minutes),0) INTO n FROM public.cardio_sessions cs WHERE NOT cs.is_deleted AND coalesce(cl->'cardio_session_ids','[]') @> to_jsonb(ARRAY[cs.id]) AND (cs.date=s.planned_date OR (coalesce(cl->'continuation_dates','[]')?cs.date::text AND cs.date BETWEEN s.planned_date AND s.planned_date+(q->>'continuation_days')::int));
+  -- An actual candidate is not an association. Ask the owner to identify it.
+  IF n=0 AND q->'admissible_sources'?'logged' AND EXISTS(
+   SELECT 1 FROM public.cardio_sessions cs WHERE NOT cs.is_deleted
+    AND (cs.date=s.planned_date OR coalesce(cl->'continuation_dates','[]')?cs.date::text)
+  ) THEN missing:=missing||'"cardio_association"'::jsonb; END IF;
   logged_ok:=logged_ok AND n>=(q->>'min_minutes')::int;
   report_ok:=coalesce((report->>'minutes')::int>=(q->>'min_minutes')::int,false);
   has_logs:=n>0;
@@ -190,7 +195,7 @@ BEGIN
  ELSIF logged_ok OR report_ok THEN qualifies:='qualifies'; missing:='[]';
  ELSIF jsonb_array_length(missing)>0 OR (has_report AND NOT report_ok) THEN qualifies:='pending'; IF has_report AND NOT report_ok THEN missing:=missing||'"report_rule_details"'::jsonb; END IF;
  ELSE qualifies:='does_not_qualify'; END IF;
- RETURN jsonb_build_object('qualification',qualifies,'missing_qualifiers',missing,'source',source,'raw_logged_set_count',logged_count,'reported_work',report,'anchor_counts',counts,'queue_effect',CASE WHEN qualifies='qualifies' THEN q->>'queue_effect' ELSE 'hold' END,'evidence_fingerprint',evidence_fingerprint,'fingerprint',public.training_digest(jsonb_build_object('evidence',evidence_fingerprint,'resolution',resolution)));
+ RETURN jsonb_build_object('qualification',qualifies,'missing_qualifiers',missing,'source',source,'raw_logged_set_count',logged_count,'reported_work',report,'effective_report',CASE WHEN resolution='use_logs' THEN NULL ELSE report END,'anchor_counts',counts,'queue_effect',CASE WHEN qualifies='qualifies' THEN q->>'queue_effect' ELSE 'hold' END,'evidence_fingerprint',evidence_fingerprint,'fingerprint',public.training_digest(jsonb_build_object('evidence',evidence_fingerprint,'resolution',resolution)));
 END $$;
 CREATE FUNCTION public.training_queue() RETURNS jsonb LANGUAGE plpgsql STABLE SET search_path=pg_catalog,public AS $$
 DECLARE st public.training_plan_state; c jsonb; baseline public.training_plan_events; act public.training_plan_events; s record; ev jsonb; nextkey text; reskey text; pos int; total int; cnt int:=0; uncertain boolean:=false; basis jsonb:='[]'; prior jsonb; sequence jsonb;
@@ -317,13 +322,28 @@ CREATE FUNCTION public.training_load_dates(zone text) RETURNS TABLE(load_date da
  CROSS JOIN LATERAL (SELECT public.training_exercise_load_tags(s.exercise_id) || CASE WHEN s.weight IS NOT NULL THEN '["resistance","systemic"]'::jsonb ELSE '[]'::jsonb END AS tags) cl
  WHERE NOT s.is_deleted
  UNION ALL
- SELECT (e.payload#>>'{report,performed_on}')::date, sc.load_tags || coalesce(e.payload#>'{report,load_tags}','[]') || cl.tags ||
-  CASE WHEN EXISTS(SELECT 1 FROM jsonb_array_elements(coalesce(e.payload#>'{report,work}','[]')) w WHERE (w->>'sets')::int>0) OR sc.load_tags?'resistance' THEN '["resistance","systemic"]'::jsonb ELSE '[]'::jsonb END ||
-  CASE WHEN coalesce((e.payload#>>'{report,minutes}')::int,0)>0 THEN '["cardio","systemic"]'::jsonb ELSE '[]'::jsonb END,
-  'report',e.id::text,cl.unresolved_tags || public.training_unknown_regions(sc.load_tags || coalesce(e.payload#>'{report,load_tags}','[]'))
- FROM public.training_plan_events e JOIN public.training_session_contexts sc ON sc.id=e.session_id
- CROSS JOIN LATERAL public.training_content_load(coalesce(e.payload#>'{report,work}','[]')) cl
- WHERE e.kind='confirm_report' AND (EXISTS(SELECT 1 FROM jsonb_array_elements(coalesce(e.payload#>'{report,work}','[]')) w WHERE (w->>'sets')::int>0) OR coalesce((e.payload#>>'{report,minutes}')::int,0)>0 OR e.payload#>'{report,objective_met}'='true'::jsonb)
+ -- Qualification and spacing share the latest report and evidence-scoped
+ -- resolution. Historical reports remain immutable, not permanently actual.
+ -- Never filter by qualification: a below-minimum report still imposes load.
+ SELECT (r.report->>'performed_on')::date, load.tags || CASE WHEN load.tags?'resistance' THEN '["systemic"]'::jsonb ELSE '[]'::jsonb END,'report',e.id::text,
+  cl.unresolved_tags || public.training_unknown_regions(load.tags)
+ FROM public.training_session_contexts sc
+ CROSS JOIN LATERAL (SELECT public.training_evaluate(sc.id)->'effective_report' AS report) r
+ CROSS JOIN LATERAL (SELECT id FROM public.training_plan_events WHERE session_id=sc.id AND kind='confirm_report' ORDER BY occurred_at DESC,id DESC LIMIT 1) e
+ CROSS JOIN LATERAL (SELECT coalesce(jsonb_agg(w),'[]') AS work FROM jsonb_array_elements(coalesce(r.report->'work','[]')) w WHERE (w->>'sets')::int>0) actual
+ CROSS JOIN LATERAL public.training_content_load(actual.work) cl
+ CROSS JOIN LATERAL (SELECT coalesce(r.report->'load_tags',sc.load_tags) || cl.tags ||
+  CASE WHEN jsonb_array_length(actual.work)>0 THEN '["resistance","systemic"]'::jsonb ELSE '[]'::jsonb END ||
+  CASE WHEN coalesce((r.report->>'minutes')::int,0)>0 THEN '["cardio","systemic"]'::jsonb ELSE '[]'::jsonb END AS tags) load
+ WHERE jsonb_array_length(actual.work)>0 OR coalesce((r.report->>'minutes')::int,0)>0 OR r.report->'objective_met'='true'::jsonb
+ UNION ALL
+ -- Latest complete day testimony can establish actual unlogged resistance,
+ -- never its anatomical region or qualification. Positive sets remain separate.
+ SELECT (e.payload->>'date')::date,'["resistance","systemic"]'::jsonb,
+  'day_confirmation',e.id::text,'["upper","lower","full_body"]'::jsonb
+ FROM (SELECT DISTINCT ON (payload->>'date') * FROM public.training_plan_events
+  WHERE kind='confirm_day' ORDER BY payload->>'date',occurred_at DESC,id DESC) e
+ WHERE e.payload->'complete'='true'::jsonb AND e.payload->'non_strength'='false'::jsonb
  UNION ALL
  SELECT cs.date,jsonb_build_array('cardio','systemic') || cl.tags,'cardio',cs.id::text,public.training_unknown_regions(cl.tags)
  FROM public.cardio_sessions cs CROSS JOIN LATERAL (SELECT public.training_exercise_load_tags(cs.exercise_id) AS tags) cl WHERE NOT cs.is_deleted
