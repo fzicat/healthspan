@@ -27,7 +27,9 @@ export async function createLocalTrainingServer(options: { port?: number; planni
   const requests: unknown[] = [];
   let lock = Promise.resolve();
   const serial = <T>(fn: () => Promise<T>): Promise<T> => { const job = lock.then(fn); lock = job.then(() => {}, () => {}); return job; };
-  const query = async (sql: string, params: Json[] = []) => (await db.query<Json>(sql, params)).rows;
+  // HTTP reads use PostgREST's YYYY-MM-DD date representation. Direct SQL
+  // fixture access retains PGlite's native Date values for existing regressions.
+  const query = async (sql: string, params: Json[] = []) => (await db.query<Json>(sql, params, { parsers: { 1082: value => value } })).rows;
   await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS; CREATE SCHEMA auth; CREATE TABLE auth.users(id uuid primary key); INSERT INTO auth.users VALUES ('${owner}');`);
   await db.exec((await readFile(resolve(root, 'supabase/schema.sql'), 'utf8')).split('-- Fuzzy duplicate detection')[0]);
   await db.exec('GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role; GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated, service_role; GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated,service_role;');
@@ -113,10 +115,10 @@ export async function createLocalTrainingServer(options: { port?: number; planni
         const params: Json[] = [], where: string[] = [];
         const bind = (value: Json) => { params.push(value); return `$${params.length}`; };
         const select = (url.searchParams.get('select') || '*').replace(/\s/g, '');
-        // Support only the two real FK reads used here, never synthesize joins.
+        // Support only the exercised real FK relationships, never synthesize joins.
         const relation = select.match(/(exercises|workouts)(!inner)?\(([^()]*)\)/);
         const join = relation?.[1];
-        if (join && !(join === 'exercises' && ['sets','workouts_exercises'].includes(table) || join === 'workouts' && table === 'workouts_exercises')) throw new Error('Unsupported relationship');
+        if (join && !(join === 'exercises' && ['sets','workouts_exercises','cardio_sessions'].includes(table) || join === 'workouts' && table === 'workouts_exercises')) throw new Error('Unsupported relationship');
         for (const [key, value] of url.searchParams) {
           if (['select','order','limit','offset'].includes(key) || req.method === 'POST' && key === 'columns') continue;
           const [op,...rest] = value.split('.'); const val = rest.join('.');

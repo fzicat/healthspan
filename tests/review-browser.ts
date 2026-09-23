@@ -6,7 +6,7 @@ import { activate, attribute, decision, materialize, modalityContent, sql, type 
 
 export async function reviewBrowser(page: Page, reset: () => Promise<Fixture>, check: (name: string, fn: () => Promise<void>) => Promise<boolean>, shot: (name: string) => Promise<void>) {
   async function evidence() {
-    await page.goto(`${appURL}/training`);
+    await page.goto(`${appURL}/training/manage`);
     await page.getByRole('button', { name: 'Reports & clarification', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Actual work & missing evidence', exact: true })).toBeVisible();
   }
@@ -157,7 +157,7 @@ export async function reviewBrowser(page: Page, reset: () => Promise<Fixture>, c
     await editor.getByLabel('Reason', { exact: true }).fill('Synthetic explicit owner cancel and reissue');
     page.once('dialog', dialog => dialog.accept());
     await submit(editor, 'Cancel intent — preserve history');
-    await page.goto(`${appURL}/training`); await page.getByText('Choose an activity within approved scope', { exact: true }).click();
+    await page.goto(`${appURL}/training/manage`); await page.getByText('Choose an activity within approved scope', { exact: true }).click();
     const intent = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Record a dated intent', exact: true }) });
     await intent.getByLabel('Activity', { exact: true }).selectOption('strength');
     await intent.getByLabel('Primary slot or supportive intent').selectOption('alpha');
@@ -167,8 +167,8 @@ export async function reviewBrowser(page: Page, reset: () => Promise<Fixture>, c
     const saved = await submit(intent, 'Save intent, not performed work', 'materialize_training_session');
     assert.equal(saved.result.workout_id, old.workout_id); assert.notEqual(saved.result.session_id, old.session_id);
     await page.goto(`${appURL}/scheduled/${f.today}`); await expect(page.getByText('Manage linked intent', { exact: true })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Training context', exact: true })).toHaveAttribute('href', `/training?session=${saved.result.session_id}`);
-    await page.goto(`${appURL}/training`); await page.getByRole('button', { name: 'History', exact: true }).click();
+    await expect(page.getByRole('link', { name: 'Session record', exact: true })).toHaveAttribute('href', `/training/manage?session=${saved.result.session_id}`);
+    await page.goto(`${appURL}/training/manage`); await page.getByRole('button', { name: 'History', exact: true }).click();
     const oldHistory = page.locator('details').filter({ has: page.locator('summary').filter({ hasText: `Occurrence ${old.session_id}` }) });
     await oldHistory.locator('summary').click(); await expect(oldHistory.getByRole('heading', { name: 'Cancel session' })).toBeVisible();
     assert.deepEqual((await f.rpc('get_training_history', { session_id: old.session_id })).sessions[0].snapshot, before.sessions[0].snapshot);
@@ -178,7 +178,7 @@ export async function reviewBrowser(page: Page, reset: () => Promise<Fixture>, c
   await check('A14-browser-reached-revisit-is-review-not-expiry', async () => {
     const f = await reset(); const rid = await activate(f); const intent = await materialize(f);
     await sql(f, "SELECT training_event('deviation',$1,$2,$3::jsonb,'owner:fixture')", [rid, intent.session_id, JSON.stringify({ reason: 'Synthetic retained deviation', revisit_on: f.today })]);
-    await page.goto(`${appURL}/training`);
+    await page.goto(`${appURL}/training/manage`);
     await expect(page.getByRole('heading', { name: 'Review due — not expiry', exact: true })).toBeVisible();
     await expect(page.locator('p').filter({ hasText: 'Recorded deviation reached its revisit date' })).toBeVisible();
     assert.equal((await f.rpc('get_training_context')).authority.lifecycle, 'active');

@@ -1,0 +1,155 @@
+PASS adapter-rejects-missing-and-forged-session
+PASS anonymous-middleware-redirect
+PASS training-navigation
+PASS training-context-render
+PASS owner-proposal-and-activation
+PASS linked-workout-operation-contracts
+PASS next-day-recovery-and-pending-slot
+PASS supportive-cardio-bounds-and-numeric-payload
+PASS immutable-history
+PASS original-logger-prefill-and-save
+PASS mobile-training-layout
+PASS logger-during-planning-outage
+PASS R2-browser-exact-cardio-proposal
+PASS R2-browser-corrected-cardio-proposal
+PASS R2-browser-direct-mobility-objective-explicit-load-confirmation
+PASS R5-browser-correct-to-no-work-and-explicit-queue-repair
+PASS R3-browser-logged-cardio-selection-and-duplicate-association-refusal
+PASS A5-A9-browser-effort-quality-clarification-and-distinct-session
+PASS R1-browser-complete-day-strength-recovery
+PASS R4-browser-cancel-reissue-current-linked-header-and-frozen-history
+PASS A14-browser-reached-revisit-is-review-not-expiry
+PASS A22-browser-repeat-freeform-copies-intent-not-evidence
+PASS A22-browser-copy-repeat-never-copy-credit-or-overwrite-linked-work
+PASS dashboard-inactive-ordinary-activity-mobile
+PASS dashboard-active-recovery-proposals-and-previous-phase
+PASS dashboard-empty-unprovisioned-and-bounded-activity
+PASS dashboard-loading-errors-and-retry
+PASS logger-without-migration
+{
+  "cleanupVerified": true,
+  "label": "Synthetic LOCAL PGlite + test-only HTTP adapter; not Supabase validation",
+  "results": [
+    {
+      "name": "adapter-rejects-missing-and-forged-session",
+      "status": "passed"
+    },
+    {
+      "name": "anonymous-middleware-redirect",
+      "status": "passed"
+    },
+    {
+      "name": "training-navigation",
+      "status": "passed"
+    },
+    {
+      "name": "training-context-render",
+      "status": "passed"
+    },
+    {
+      "name": "owner-proposal-and-activation",
+      "status": "passed"
+    },
+    {
+      "name": "linked-workout-operation-contracts",
+      "status": "passed"
+    },
+    {
+      "name": "next-day-recovery-and-pending-slot",
+      "status": "passed"
+    },
+    {
+      "name": "supportive-cardio-bounds-and-numeric-payload",
+      "status": "passed"
+    },
+    {
+      "name": "immutable-history",
+      "status": "passed"
+    },
+    {
+      "name": "original-logger-prefill-and-save",
+      "status": "passed"
+    },
+    {
+      "name": "mobile-training-layout",
+      "status": "passed"
+    },
+    {
+      "name": "logger-during-planning-outage",
+      "status": "passed"
+    },
+    {
+      "name": "R2-browser-exact-cardio-proposal",
+      "status": "passed"
+    },
+    {
+      "name": "R2-browser-corrected-cardio-proposal",
+      "status": "passed"
+    },
+    {
+      "name": "R2-browser-direct-mobility-objective-explicit-load-confirmation",
+      "status": "passed"
+    },
+    {
+      "name": "R5-browser-correct-to-no-work-and-explicit-queue-repair",
+      "status": "passed"
+    },
+    {
+      "name": "R3-browser-logged-cardio-selection-and-duplicate-association-refusal",
+      "status": "passed"
+    },
+    {
+      "name": "A5-A9-browser-effort-quality-clarification-and-distinct-session",
+      "status": "passed"
+    },
+    {
+      "name": "R1-browser-complete-day-strength-recovery",
+      "status": "passed"
+    },
+    {
+      "name": "R4-browser-cancel-reissue-current-linked-header-and-frozen-history",
+      "status": "passed"
+    },
+    {
+      "name": "A14-browser-reached-revisit-is-review-not-expiry",
+      "status": "passed"
+    },
+    {
+      "name": "A22-browser-repeat-freeform-copies-intent-not-evidence",
+      "status": "passed"
+    },
+    {
+      "name": "A22-browser-copy-repeat-never-copy-credit-or-overwrite-linked-work",
+      "status": "passed"
+    },
+    {
+      "name": "dashboard-inactive-ordinary-activity-mobile",
+      "status": "passed"
+    },
+    {
+      "name": "dashboard-active-recovery-proposals-and-previous-phase",
+      "status": "passed"
+    },
+    {
+      "name": "dashboard-empty-unprovisioned-and-bounded-activity",
+      "status": "passed"
+    },
+    {
+      "name": "dashboard-loading-errors-and-retry",
+      "status": "passed"
+    },
+    {
+      "name": "logger-without-migration",
+      "status": "passed"
+    }
+  ],
+  "pageErrors": [],
+  "blockedExternalOrigins": [],
+  "migrations": [
+    "202609220001_training_planning.sql",
+    "202609220002_training_engine.sql",
+    "202609220003_training_rpcs.sql",
+    "202609220004_training_grants.sql"
+  ],
+  "screenshots": "Captured, not visually inspected"
+}

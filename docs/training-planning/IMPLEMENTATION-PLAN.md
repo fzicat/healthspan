@@ -1,5 +1,7 @@
 # Authorized implementation checkpoint
 
+> Historical implementation checkpoint, not the current UI plan. The product correction in `SPEC-training-planning.md` and `SIMPLE-DASHBOARD-DELIVERY.md` supersedes the control-panel UI described here. `/training` is a three-section dashboard; existing authenticated tools remain at `/training/manage` for compatibility. No further architecture or migration work is implied.
+
 The authorization in the implementation brief supersedes only the old drafting-status text in SPEC-training-planning.md. The original SPEC is preserved byte-for-byte. No actual athlete direction is approved by this work.
 
 Worktree: `/home/fzicat/projects/healthspan-training-planning`

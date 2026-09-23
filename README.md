@@ -1,8 +1,10 @@
 # Healthspan
 
-## Durable training planning (feature branch, not deployed)
+## Training dashboard (feature branch)
 
-Read `docs/training-planning/IMPLEMENTATION-REPORT.md` for implementation and explicit A1–A32 evidence/limitations. `/training` is optional; normal set logging remains independent. Planning requires the four additive SQL migrations and explicit inactive owner/timezone provisioning before any authenticated owner activation. Never rerun `supabase/schema.sql` on an existing database. Apply only after reviewing `docs/training-planning/SQL-RUNBOOK.md`. No live athlete plan is included.
+`/training` is a simple dashboard: what we did, where we are, and where we're going. Coaching and decisions happen with Dozer outside Healthspan. Recent ordinary logs remain visible independently of planning. See `docs/training-planning/SIMPLE-DASHBOARD-DELIVERY.md` for the product correction and local verification. Existing authenticated confirmations remain at `/training/manage` through Settings; external conversation alone cannot activate a plan.
+
+The earlier `docs/training-planning/IMPLEMENTATION-REPORT.md` records engine/security evidence, not the current dashboard design. The dashboard correction needs no new SQL or database project and does not require repeating applied runbook steps. Existing planning still depends on the four additive migrations and explicit owner/timezone provisioning. Never rerun `supabase/schema.sql` on an existing database. For an installation that has not yet provisioned planning, review `docs/training-planning/SQL-RUNBOOK.md`. No live athlete plan is included.
 
 Tests: `npm ci --ignore-scripts`, `npm --prefix mcp-server ci --ignore-scripts`, then `npm run test:training`, `npm run lint`, and `npm --prefix mcp-server run typecheck`. Browser/build isolation instructions are in `tests/README.md`; all fixtures are local/synthetic. Set `NEXT_PUBLIC_ATHLETE_TIMEZONE` at build time and `HSPAN_ATHLETE_TIMEZONE` for MCP to the provisioned zone (defaults: America/Montreal).
 

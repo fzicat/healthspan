@@ -1,5 +1,15 @@
 # Durable Training Planning in Healthspan
 
+## Product correction: simple dashboard (supersedes UI requirements below)
+
+Healthspan is the record and dashboard; coaching discussions and decisions happen with Dozer outside the app. `/training` must remain a calm, read-only three-section page: **What we did**, **Where we are**, **Where we’re going**. Show bounded actual logger activity (including unlinked work), a supported current-phase summary, and recorded next sessions/direction. Scheduling and proposals are not completed activity; the next strength session is not today's clearance. Never invent a future phase or coaching recommendation.
+
+Do not restore proposal editors, lifecycle/review/qualification forms, technical evidence, IDs, receipts, or the tabbed control panel to the default dashboard. Necessary existing authenticated operations survive only at `/training/manage`, accessible from Settings and exact session-record links. This is transitional compatibility, not a new coaching UI or an external-chat authorization mechanism. Owner-only activation, immutable history, qualification/recovery semantics, and ordinary logging remain unchanged.
+
+The historical specification below remains useful for data/security semantics, but its dashboard/control-panel journeys and UI acceptance requirements are superseded by this correction. See `docs/training-planning/SIMPLE-DASHBOARD-DELIVERY.md` for delivered behavior, verification, and limitations. No new migration, database project, or repetition of already-applied runbook steps is required for this UI correction. Original `SPEC.md` is unchanged.
+
+## Historical feature specification
+
 Status: proposed feature SPEC; not implemented; no implementation authorization.
 Baseline: `main`, `a80725f0fbfa42ac63ad9f3ef3cfdd9a2b14f4a0`. Prepared 2026-09-22, America/Montreal.
 Author: Smith — Frank's AI Agent. Engineering input: Neo. Coaching requirements: Dozer, integrated with Smith's product reconciliation.

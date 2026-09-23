@@ -1,5 +1,7 @@
 # Durable training planning — implementation and Smith handoff
 
+> Historical implementation report. The default dashboard/control-panel behavior below is superseded by [SIMPLE-DASHBOARD-DELIVERY.md](SIMPLE-DASHBOARD-DELIVERY.md) and the product-correction preface in `SPEC-training-planning.md`. Do not use this report to restore administrative UI to `/training`; those operations now live at `/training/manage` only for authenticated compatibility. Historical commit/hash/deployment statements below describe their original checkpoints, not current live state.
+
 ## Status and scope
 
 Local implementation candidate, exercised with synthetic data. NOT merged, pushed, deployed, or approved as an athlete plan. Full product/coaching acceptance is NOT claimed: the matrix below distinguishes local verification, incomplete scenario coverage and authorized-environment gates. Smith owns independent verification and any later merge-approval request to Frank.

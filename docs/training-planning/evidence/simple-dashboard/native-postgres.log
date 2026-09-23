@@ -1,0 +1,448 @@
+Native disposable PostgreSQL evidence (synthetic data only)
+postgres (PostgreSQL) 18.4
+The files belonging to this database system will be owned by user "fzicat".
+This user must also own the server process.
+The database cluster will be initialized with locale "C".
+The default text search configuration will be set to "english".
+
+Data page checksums are enabled.
+
+creating directory /home/fzicat/projects/healthspan-training-planning/.training-test/native-postgres ... ok
+creating subdirectories ...
+ok
+selecting dynamic shared memory implementation ...
+posix
+selecting default "max_connections" ...
+100
+selecting default "shared_buffers" ...
+128MB
+selecting default time zone ...
+America/Montreal
+creating configuration files ...
+ok
+running bootstrap script ...
+ok
+performing post-bootstrap initialization ...
+ok
+syncing data to disk ...
+ok
+
+Success. You can now start the database server using:
+
+    '/home/fzicat/projects/healthspan-training-planning/node_modules/@embedded-postgres/linux-x64/native/bin/pg_ctl' -D /home/fzicat/projects/healthspan-training-planning/.training-test/native-postgres -l logfile start
+2026-09-23 14:29:46.528 EDT [647973] LOG:  starting PostgreSQL 18.4 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit
+2026-09-23 14:29:46.528 EDT [647973] LOG:  listening on IPv4 address "127.0.0.1", port 41353
+2026-09-23 14:29:46.538 EDT [647979] LOG:  database system was shut down at 2026-09-23 14:29:45 EDT
+2026-09-23 14:29:46.542 EDT [647973] LOG:  database system is ready to accept connections
+START 2026-09-23T18:29:45.194Z; loopback 127.0.0.1:41353
+SOURCE supabase/schema.sql ea0294bf8ebfa347ca8d540864bf757c240e6f1a24415ecc406a6635ff12f6dd
+SOURCE supabase/migrations/202609220001_training_planning.sql a1186e1525861da430961f15ed5cfa38b1225b5ec6b7d5c7884c137b02b3792b
+SOURCE supabase/migrations/202609220002_training_engine.sql cdab4741d452b0063070dca993ff9036c47646888a8cbaf3493dcb8c618ae9b7
+SOURCE supabase/migrations/202609220003_training_rpcs.sql 81e74a26cd101821724bd711f672f1905c30b73147ebd66bd20b896fe8765fb8
+SOURCE supabase/migrations/202609220004_training_grants.sql 27da6867a02279d3817e0f482488a6a5f9857fa33d06ab2ca88c395854a6c3a8
+ok 1 - restricted non-superuser schema administrator applies all four real migrations
+2026-09-23 14:29:46.681 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:46.682 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:46.682 EDT [647985] WARNING:  there is no transaction in progress
+BARRIER [{"pid":647986,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":647986,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":647987,"blockers":[647986],"wait_event_type":"Lock","wait_event":"tuple"}]
+ok 2 - R4 overlapping cancelled reissue (same key=true) preserves one new occurrence and original snapshot
+2026-09-23 14:29:46.943 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:46.943 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:46.943 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:46.943 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:46.944 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:46.944 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:46.944 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:46.944 EDT [647990] WARNING:  there is no transaction in progress
+BARRIER [{"pid":647986,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":647986,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":647987,"blockers":[647986],"wait_event_type":"Lock","wait_event":"tuple"}]
+2026-09-23 14:29:47.130 EDT [647987] ERROR:  VERSION_CONFLICT
+2026-09-23 14:29:47.130 EDT [647987] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('VERSION_CONFLICT')"
+	PL/pgSQL function training_lock(jsonb) line 7 at PERFORM
+	SQL statement "SELECT public.training_lock(p)"
+	PL/pgSQL function training_begin(text,jsonb) line 8 at PERFORM
+	PL/pgSQL function materialize_training_session(jsonb) line 5 at assignment
+ok 3 - R4 overlapping cancelled reissue (same key=false) preserves one new occurrence and original snapshot
+2026-09-23 14:29:47.140 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.140 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.140 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.140 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.140 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.140 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.141 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.141 EDT [647990] WARNING:  there is no transaction in progress
+BARRIER [{"pid":647986,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":647986,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":647987,"blockers":[647986],"wait_event_type":"Lock","wait_event":"tuple"}]
+2026-09-23 14:29:47.270 EDT [647987] ERROR:  IDEMPOTENCY_CONFLICT
+2026-09-23 14:29:47.270 EDT [647987] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('IDEMPOTENCY_CONFLICT')"
+	PL/pgSQL function training_replay(text,jsonb) line 9 at PERFORM
+	PL/pgSQL function training_begin(text,jsonb) line 6 at assignment
+	PL/pgSQL function materialize_training_session(jsonb) line 5 at assignment
+ok 4 - A20/A32 simultaneous identical request: one receipt/session/workout/prescription
+2026-09-23 14:29:47.271 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.271 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.271 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.271 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.272 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.272 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.272 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.272 EDT [647990] WARNING:  there is no transaction in progress
+BARRIER [{"pid":647986,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":647986,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":647987,"blockers":[647986],"wait_event_type":"Lock","wait_event":"tuple"}]
+2026-09-23 14:29:47.394 EDT [647987] ERROR:  VERSION_CONFLICT
+2026-09-23 14:29:47.394 EDT [647987] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('VERSION_CONFLICT')"
+	PL/pgSQL function training_lock(jsonb) line 7 at PERFORM
+	SQL statement "SELECT public.training_lock(p)"
+	PL/pgSQL function training_begin(text,jsonb) line 8 at PERFORM
+	PL/pgSQL function materialize_training_session(jsonb) line 5 at assignment
+ok 5 - A20/A32 distinct concurrent keys on one expected version: one commit, one VERSION_CONFLICT
+2026-09-23 14:29:47.395 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.395 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.395 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.395 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.396 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.396 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.396 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.396 EDT [647990] WARNING:  there is no transaction in progress
+BARRIER [{"pid":647986,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":647986,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":647987,"blockers":[647986],"wait_event_type":"Lock","wait_event":"tuple"}]
+2026-09-23 14:29:47.525 EDT [647987] ERROR:  VERSION_CONFLICT
+2026-09-23 14:29:47.525 EDT [647987] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('VERSION_CONFLICT')"
+	PL/pgSQL function training_lock(jsonb) line 7 at PERFORM
+	SQL statement "SELECT public.training_lock(p)"
+	PL/pgSQL function training_begin(text,jsonb) line 8 at PERFORM
+	PL/pgSQL function materialize_training_session(jsonb) line 5 at assignment
+ok 6 - activation versus materialization (first=0): no partial authority/intent
+2026-09-23 14:29:47.532 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.533 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.533 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.533 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.533 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.533 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.534 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.534 EDT [647990] WARNING:  there is no transaction in progress
+BARRIER [{"pid":647987,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":647986,"blockers":[647987],"wait_event_type":"Lock","wait_event":"tuple"},{"pid":647987,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"}]
+2026-09-23 14:29:47.681 EDT [647986] ERROR:  VERSION_CONFLICT
+2026-09-23 14:29:47.681 EDT [647986] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('VERSION_CONFLICT')"
+	PL/pgSQL function training_lock(jsonb) line 7 at PERFORM
+	SQL statement "SELECT public.training_lock(p)"
+	PL/pgSQL function training_begin(text,jsonb) line 8 at PERFORM
+	PL/pgSQL function activate_training_revision(jsonb) line 5 at assignment
+ok 7 - activation versus materialization (first=1): no partial authority/intent
+2026-09-23 14:29:47.690 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.690 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.691 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.691 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.691 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.691 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.692 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.692 EDT [647990] WARNING:  there is no transaction in progress
+BARRIER [{"pid":647986,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":647986,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":647987,"blockers":[647986],"wait_event_type":"Lock","wait_event":"tuple"}]
+2026-09-23 14:29:47.888 EDT [647987] ERROR:  VERSION_CONFLICT
+2026-09-23 14:29:47.888 EDT [647987] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('VERSION_CONFLICT')"
+	PL/pgSQL function training_lock(jsonb) line 7 at PERFORM
+	SQL statement "SELECT public.training_lock(p)"
+	PL/pgSQL function training_begin(text,jsonb) line 8 at PERFORM
+	PL/pgSQL function record_training_decision(jsonb) line 24 at assignment
+ok 8 - activation versus qualifying reconciliation (first=0): no double credit
+2026-09-23 14:29:47.923 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.924 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.924 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.924 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.924 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.924 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.925 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:47.925 EDT [647990] WARNING:  there is no transaction in progress
+BARRIER [{"pid":647987,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":647986,"blockers":[647987],"wait_event_type":"Lock","wait_event":"tuple"},{"pid":647987,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"}]
+2026-09-23 14:29:48.114 EDT [647986] ERROR:  VERSION_CONFLICT
+2026-09-23 14:29:48.114 EDT [647986] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('VERSION_CONFLICT')"
+	PL/pgSQL function training_lock(jsonb) line 7 at PERFORM
+	SQL statement "SELECT public.training_lock(p)"
+	PL/pgSQL function training_begin(text,jsonb) line 8 at PERFORM
+	PL/pgSQL function activate_training_revision(jsonb) line 5 at assignment
+ok 9 - activation versus qualifying reconciliation (first=1): no double credit
+2026-09-23 14:29:48.155 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.155 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.155 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.155 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.155 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.156 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.156 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.156 EDT [647990] WARNING:  there is no transaction in progress
+BARRIER [{"pid":647986,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"}]
+BARRIER [{"pid":647986,"blockers":[647985],"wait_event_type":"Lock","wait_event":"transactionid"},{"pid":647987,"blockers":[647986],"wait_event_type":"Lock","wait_event":"tuple"}]
+2026-09-23 14:29:48.311 EDT [647987] ERROR:  VERSION_CONFLICT
+2026-09-23 14:29:48.311 EDT [647987] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('VERSION_CONFLICT')"
+	PL/pgSQL function training_lock(jsonb) line 7 at PERFORM
+	SQL statement "SELECT public.training_lock(p)"
+	PL/pgSQL function training_begin(text,jsonb) line 8 at PERFORM
+	PL/pgSQL function record_training_decision(jsonb) line 24 at assignment
+ok 10 - concurrent same-occurrence reconciliations advance exactly once, including fresh retry
+2026-09-23 14:29:48.350 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.350 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.351 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.351 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.351 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.351 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.351 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.352 EDT [647990] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.439 EDT [647986] ERROR:  VERSION_CONFLICT
+2026-09-23 14:29:48.439 EDT [647986] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('VERSION_CONFLICT')"
+	PL/pgSQL function training_lock(jsonb) line 7 at PERFORM
+	SQL statement "SELECT public.training_lock(p)"
+	PL/pgSQL function training_begin(text,jsonb) line 8 at PERFORM
+	PL/pgSQL function materialize_training_session(jsonb) line 5 at assignment
+ok 11 - raw evidence committed after context: stale mutation rejects without partial intent
+2026-09-23 14:29:48.445 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.446 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.446 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.446 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.446 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.447 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.447 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.447 EDT [647990] WARNING:  there is no transaction in progress
+BARRIER [{"pid":647987,"blockers":[647986],"wait_event_type":"Lock","wait_event":"transactionid"}]
+ok 12 - evidence triggers serialize concurrent raw writers; rollback restores version and raw row
+2026-09-23 14:29:48.560 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.560 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.560 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.561 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.561 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.561 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.561 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.561 EDT [647990] WARNING:  there is no transaction in progress
+ok 13 - all seven legacy evidence sources increment versions on INSERT/UPDATE/DELETE
+2026-09-23 14:29:48.922 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.922 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.922 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.922 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.923 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.923 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.923 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:48.923 EDT [647990] WARNING:  there is no transaction in progress
+BARRIER [{"pid":647987,"blockers":[647986],"wait_event_type":"Lock","wait_event":"transactionid"}]
+2026-09-23 14:29:49.358 EDT [647987] LOG:  process 647987 detected deadlock while waiting for ShareLock on transaction 953 after 300.122 ms
+2026-09-23 14:29:49.358 EDT [647987] DETAIL:  Process holding the lock: 647986. Wait queue: .
+2026-09-23 14:29:49.358 EDT [647987] CONTEXT:  while locking tuple (0,1) in relation "sets"
+	SQL statement "UPDATE public.sets SET training_session_id=sid WHERE id=idn"
+	PL/pgSQL function record_training_decision(jsonb) line 62 at SQL statement
+2026-09-23 14:29:49.358 EDT [647987] ERROR:  deadlock detected
+2026-09-23 14:29:49.358 EDT [647987] DETAIL:  Process 647987 waits for ShareLock on transaction 953; blocked by process 647986.
+	Process 647986 waits for ShareLock on transaction 954; blocked by process 647987.
+	Process 647987: SELECT public.record_training_decision($1::jsonb)
+	Process 647986: UPDATE sets SET reps=6 WHERE id=$1
+2026-09-23 14:29:49.358 EDT [647987] HINT:  See server log for query details.
+2026-09-23 14:29:49.358 EDT [647987] CONTEXT:  while locking tuple (0,1) in relation "sets"
+	SQL statement "UPDATE public.sets SET training_session_id=sid WHERE id=idn"
+	PL/pgSQL function record_training_decision(jsonb) line 62 at SQL statement
+DEADLOCK {"victim":"planner","sqlstate":"40P01","explicitFreshRetry":true}
+ok 14 - real lock inversion deadlock: 40P01 rollback, context refresh/retry, no partial or double credit
+2026-09-23 14:29:49.427 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.427 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.427 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.427 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.427 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.428 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.428 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.428 EDT [647990] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.522 EDT [647988] ERROR:  AUTHORITY_REQUIRED
+2026-09-23 14:29:49.522 EDT [647988] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('AUTHORITY_REQUIRED')"
+	PL/pgSQL function training_actor(boolean) line 10 at PERFORM
+	SQL statement "SELECT public.training_actor()"
+	PL/pgSQL function get_training_context(jsonb) line 5 at PERFORM
+2026-09-23 14:29:49.522 EDT [647989] ERROR:  permission denied for function get_training_context
+2026-09-23 14:29:49.523 EDT [647988] ERROR:  AUTHORITY_REQUIRED
+2026-09-23 14:29:49.523 EDT [647988] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('AUTHORITY_REQUIRED')"
+	PL/pgSQL function training_actor(boolean) line 7 at PERFORM
+	SQL statement "SELECT public.training_actor()"
+	PL/pgSQL function get_training_context(jsonb) line 5 at PERFORM
+2026-09-23 14:29:49.523 EDT [647990] ERROR:  AUTHORITY_REQUIRED
+2026-09-23 14:29:49.523 EDT [647990] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('AUTHORITY_REQUIRED')"
+	PL/pgSQL function training_actor(boolean) line 7 at PERFORM
+	SQL statement "SELECT public.training_actor()"
+	PL/pgSQL function get_training_context(jsonb) line 5 at PERFORM
+2026-09-23 14:29:49.524 EDT [647986] ERROR:  AUTHORITY_REQUIRED
+2026-09-23 14:29:49.524 EDT [647986] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('AUTHORITY_REQUIRED')"
+	PL/pgSQL function training_actor(boolean) line 7 at PERFORM
+	SQL statement "SELECT public.training_actor()"
+	PL/pgSQL function get_training_context(jsonb) line 5 at PERFORM
+2026-09-23 14:29:49.524 EDT [647988] ERROR:  AUTHORITY_REQUIRED
+2026-09-23 14:29:49.524 EDT [647988] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('AUTHORITY_REQUIRED')"
+	PL/pgSQL function training_actor(boolean) line 8 at PERFORM
+	SQL statement "SELECT public.training_actor()"
+	PL/pgSQL function get_training_context(jsonb) line 5 at PERFORM
+2026-09-23 14:29:49.525 EDT [647989] ERROR:  permission denied for function get_training_context
+2026-09-23 14:29:49.525 EDT [647988] ERROR:  permission denied to set role "service_role"
+2026-09-23 14:29:49.525 EDT [647988] ERROR:  permission denied to set role "training_rpc_owner"
+ok 15 - real login roles: owner permitted; other user/anon and role-claim mismatches denied
+2026-09-23 14:29:49.526 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.526 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.526 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.526 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.526 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.526 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.526 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.527 EDT [647990] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.671 EDT [647990] ERROR:  AUTHORITY_REQUIRED
+2026-09-23 14:29:49.671 EDT [647990] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('AUTHORITY_REQUIRED')"
+	PL/pgSQL function training_actor(boolean) line 7 at PERFORM
+	SQL statement "SELECT public.training_actor(true)"
+	PL/pgSQL function activate_training_revision(jsonb) line 4 at PERFORM
+2026-09-23 14:29:49.672 EDT [647990] ERROR:  AUTHORITY_REQUIRED
+2026-09-23 14:29:49.672 EDT [647990] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('AUTHORITY_REQUIRED')"
+	PL/pgSQL function training_actor(boolean) line 7 at PERFORM
+	SQL statement "SELECT public.training_actor(true)"
+	PL/pgSQL function set_training_lifecycle(jsonb) line 4 at PERFORM
+2026-09-23 14:29:49.672 EDT [647990] ERROR:  AUTHORITY_REQUIRED
+2026-09-23 14:29:49.672 EDT [647990] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('AUTHORITY_REQUIRED')"
+	PL/pgSQL function training_actor(boolean) line 7 at PERFORM
+	PL/pgSQL function record_training_decision(jsonb) line 23 at assignment
+2026-09-23 14:29:49.673 EDT [647990] ERROR:  AUTHORITY_REQUIRED
+2026-09-23 14:29:49.673 EDT [647990] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('AUTHORITY_REQUIRED')"
+	PL/pgSQL function training_actor(boolean) line 7 at PERFORM
+	PL/pgSQL function record_training_decision(jsonb) line 23 at assignment
+2026-09-23 14:29:49.673 EDT [647990] ERROR:  AUTHORITY_REQUIRED
+2026-09-23 14:29:49.673 EDT [647990] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('AUTHORITY_REQUIRED')"
+	PL/pgSQL function training_actor(boolean) line 7 at PERFORM
+	PL/pgSQL function record_training_decision(jsonb) line 23 at assignment
+2026-09-23 14:29:49.674 EDT [647990] ERROR:  INVALID_INPUT_FIELDS
+2026-09-23 14:29:49.674 EDT [647990] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('INVALID_INPUT_FIELDS')"
+	PL/pgSQL function training_keys(jsonb,text[]) line 3 at PERFORM
+	SQL statement "SELECT public.training_keys(p_input,ARRAY['request_id','expected_state_version','expected_evidence_version','target_date','activity_kind','slot_key','reason','revisit_on','exercises','duration_minutes','intensity','replace_cancelled_session_id'])"
+	PL/pgSQL function materialize_training_session(jsonb) line 4 at PERFORM
+ok 16 - service-role coach cannot activate, change lifecycle, confirm owner evidence, or forge actor fields
+2026-09-23 14:29:49.674 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.674 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.674 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.674 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.674 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.675 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.675 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.675 EDT [647990] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.741 EDT [647986] ERROR:  permission denied for table training_plan_state
+2026-09-23 14:29:49.742 EDT [647986] ERROR:  permission denied for table training_plan_state
+2026-09-23 14:29:49.742 EDT [647986] ERROR:  permission denied for table training_plan_state
+2026-09-23 14:29:49.742 EDT [647986] ERROR:  permission denied for table training_plan_state
+2026-09-23 14:29:49.742 EDT [647986] ERROR:  permission denied for table training_plan_revisions
+2026-09-23 14:29:49.743 EDT [647986] ERROR:  permission denied for table training_plan_revisions
+2026-09-23 14:29:49.743 EDT [647986] ERROR:  permission denied for table training_plan_revisions
+2026-09-23 14:29:49.743 EDT [647986] ERROR:  permission denied for table training_plan_revisions
+2026-09-23 14:29:49.743 EDT [647986] ERROR:  permission denied for table training_session_contexts
+2026-09-23 14:29:49.743 EDT [647986] ERROR:  permission denied for table training_session_contexts
+2026-09-23 14:29:49.743 EDT [647986] ERROR:  permission denied for table training_session_contexts
+2026-09-23 14:29:49.743 EDT [647986] ERROR:  permission denied for table training_session_contexts
+2026-09-23 14:29:49.743 EDT [647986] ERROR:  permission denied for table training_plan_events
+2026-09-23 14:29:49.744 EDT [647986] ERROR:  permission denied for table training_plan_events
+2026-09-23 14:29:49.744 EDT [647986] ERROR:  permission denied for table training_plan_events
+2026-09-23 14:29:49.744 EDT [647986] ERROR:  permission denied for table training_plan_events
+2026-09-23 14:29:49.744 EDT [647986] ERROR:  permission denied for function training_actor
+2026-09-23 14:29:49.744 EDT [647986] ERROR:  permission denied for function training_event
+2026-09-23 14:29:49.744 EDT [647988] ERROR:  permission denied for table training_plan_state
+2026-09-23 14:29:49.744 EDT [647988] ERROR:  permission denied for table training_plan_state
+2026-09-23 14:29:49.744 EDT [647988] ERROR:  permission denied for table training_plan_state
+2026-09-23 14:29:49.745 EDT [647988] ERROR:  permission denied for table training_plan_state
+2026-09-23 14:29:49.745 EDT [647988] ERROR:  permission denied for table training_plan_revisions
+2026-09-23 14:29:49.745 EDT [647988] ERROR:  permission denied for table training_plan_revisions
+2026-09-23 14:29:49.745 EDT [647988] ERROR:  permission denied for table training_plan_revisions
+2026-09-23 14:29:49.745 EDT [647988] ERROR:  permission denied for table training_plan_revisions
+2026-09-23 14:29:49.745 EDT [647988] ERROR:  permission denied for table training_session_contexts
+2026-09-23 14:29:49.745 EDT [647988] ERROR:  permission denied for table training_session_contexts
+2026-09-23 14:29:49.746 EDT [647988] ERROR:  permission denied for table training_session_contexts
+2026-09-23 14:29:49.746 EDT [647988] ERROR:  permission denied for table training_session_contexts
+2026-09-23 14:29:49.746 EDT [647988] ERROR:  permission denied for table training_plan_events
+2026-09-23 14:29:49.746 EDT [647988] ERROR:  permission denied for table training_plan_events
+2026-09-23 14:29:49.746 EDT [647988] ERROR:  permission denied for table training_plan_events
+2026-09-23 14:29:49.746 EDT [647988] ERROR:  permission denied for table training_plan_events
+2026-09-23 14:29:49.746 EDT [647988] ERROR:  permission denied for function training_actor
+2026-09-23 14:29:49.747 EDT [647988] ERROR:  permission denied for function training_event
+2026-09-23 14:29:49.747 EDT [647989] ERROR:  permission denied for table training_plan_state
+2026-09-23 14:29:49.747 EDT [647989] ERROR:  permission denied for table training_plan_state
+2026-09-23 14:29:49.748 EDT [647989] ERROR:  permission denied for table training_plan_state
+2026-09-23 14:29:49.748 EDT [647989] ERROR:  permission denied for table training_plan_state
+2026-09-23 14:29:49.748 EDT [647989] ERROR:  permission denied for table training_plan_revisions
+2026-09-23 14:29:49.748 EDT [647989] ERROR:  permission denied for table training_plan_revisions
+2026-09-23 14:29:49.748 EDT [647989] ERROR:  permission denied for table training_plan_revisions
+2026-09-23 14:29:49.749 EDT [647989] ERROR:  permission denied for table training_plan_revisions
+2026-09-23 14:29:49.749 EDT [647989] ERROR:  permission denied for table training_session_contexts
+2026-09-23 14:29:49.749 EDT [647989] ERROR:  permission denied for table training_session_contexts
+2026-09-23 14:29:49.749 EDT [647989] ERROR:  permission denied for table training_session_contexts
+2026-09-23 14:29:49.749 EDT [647989] ERROR:  permission denied for table training_session_contexts
+2026-09-23 14:29:49.749 EDT [647989] ERROR:  permission denied for table training_plan_events
+2026-09-23 14:29:49.749 EDT [647989] ERROR:  permission denied for table training_plan_events
+2026-09-23 14:29:49.749 EDT [647989] ERROR:  permission denied for table training_plan_events
+2026-09-23 14:29:49.749 EDT [647989] ERROR:  permission denied for table training_plan_events
+2026-09-23 14:29:49.750 EDT [647989] ERROR:  permission denied for function training_actor
+2026-09-23 14:29:49.750 EDT [647989] ERROR:  permission denied for function training_event
+2026-09-23 14:29:49.751 EDT [647990] ERROR:  permission denied for table training_plan_state
+2026-09-23 14:29:49.751 EDT [647990] ERROR:  permission denied for table training_plan_state
+2026-09-23 14:29:49.751 EDT [647990] ERROR:  permission denied for table training_plan_state
+2026-09-23 14:29:49.751 EDT [647990] ERROR:  permission denied for table training_plan_state
+2026-09-23 14:29:49.751 EDT [647990] ERROR:  permission denied for table training_plan_revisions
+2026-09-23 14:29:49.751 EDT [647990] ERROR:  permission denied for table training_plan_revisions
+2026-09-23 14:29:49.751 EDT [647990] ERROR:  permission denied for table training_plan_revisions
+2026-09-23 14:29:49.751 EDT [647990] ERROR:  permission denied for table training_plan_revisions
+2026-09-23 14:29:49.752 EDT [647990] ERROR:  permission denied for table training_session_contexts
+2026-09-23 14:29:49.752 EDT [647990] ERROR:  permission denied for table training_session_contexts
+2026-09-23 14:29:49.752 EDT [647990] ERROR:  permission denied for table training_session_contexts
+2026-09-23 14:29:49.752 EDT [647990] ERROR:  permission denied for table training_session_contexts
+2026-09-23 14:29:49.752 EDT [647990] ERROR:  permission denied for table training_plan_events
+2026-09-23 14:29:49.752 EDT [647990] ERROR:  permission denied for table training_plan_events
+2026-09-23 14:29:49.752 EDT [647990] ERROR:  permission denied for table training_plan_events
+2026-09-23 14:29:49.752 EDT [647990] ERROR:  permission denied for table training_plan_events
+2026-09-23 14:29:49.752 EDT [647990] ERROR:  permission denied for function training_actor
+2026-09-23 14:29:49.753 EDT [647990] ERROR:  permission denied for function training_event
+2026-09-23 14:29:49.754 EDT [647984] ERROR:  IMMUTABLE_TRAINING_HISTORY
+2026-09-23 14:29:49.754 EDT [647984] CONTEXT:  PL/pgSQL function training_fail(text) line 1 at RAISE
+	SQL statement "SELECT public.training_fail('IMMUTABLE_TRAINING_HISTORY')"
+	PL/pgSQL function training_immutable() line 1 at PERFORM
+ok 17 - planning tables, helper execution, history mutation, and schema-create are denied at SQL ACLs
+2026-09-23 14:29:49.754 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.754 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.754 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.754 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.755 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.755 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.755 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.756 EDT [647990] WARNING:  there is no transaction in progress
+ok 18 - fixed SECURITY DEFINER paths resist caller temporary-table shadowing
+2026-09-23 14:29:49.845 EDT [647983] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.845 EDT [647984] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.845 EDT [647985] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.846 EDT [647986] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.846 EDT [647987] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.847 EDT [647988] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.847 EDT [647989] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.848 EDT [647990] WARNING:  there is no transaction in progress
+2026-09-23 14:29:49.850 EDT [647973] LOG:  received fast shutdown request
+2026-09-23 14:29:49.854 EDT [647973] LOG:  aborting any active transactions
+2026-09-23 14:29:49.855 EDT [647973] LOG:  background worker "logical replication launcher" (PID 647982) exited with exit code 1
+2026-09-23 14:29:49.856 EDT [647977] LOG:  shutting down
+2026-09-23 14:29:49.859 EDT [647977] LOG:  checkpoint starting: shutdown immediate
+2026-09-23 14:29:51.295 EDT [647977] LOG:  checkpoint complete: wrote 1079 buffers (6.6%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.020 s, sync=1.389 s, total=1.440 s; sync files=1233, longest=0.006 s, average=0.002 s; distance=6175 kB, estimate=6175 kB; lsn=0/1D532D0, redo lsn=0/1D532D0
+2026-09-23 14:29:51.305 EDT [647973] LOG:  database system is shut down
+CLEANUP listener closed; 17 tracked PIDs exited; disposable data removed
+RESULT 18 passed; 0 failed; native PostgreSQL; cleanup=true

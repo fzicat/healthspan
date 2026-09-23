@@ -130,12 +130,12 @@ export function DecisionHistory({ event }: { event: TrainingRecord }) {
 
 export function TrainingContext({ context, error, session, loading }: { context: TrainingContextData | null; error?: string; session?: TrainingSession | null; loading?: boolean }) {
     if (loading) return <p className="text-xs text-muted-foreground mb-3">Checking optional training context… Logging is available.</p>
-    if (!session) return <div className="mb-3 text-xs text-muted-foreground"><Link className="inline-flex min-h-11 items-center underline" href="/training">Not linked / not checked against plan</Link>{error && <p>Planning unavailable; set logging is unaffected.</p>}</div>
+    if (!session) return <div className="mb-3 text-xs text-muted-foreground"><Link className="inline-flex min-h-11 items-center underline" href="/training">Training dashboard</Link> · No plan link verified{error && <p>Planning unavailable; set logging is unaffected.</p>}</div>
     const snapshot = record(session.snapshot)
     const direction = record(snapshot.direction ?? snapshot.revision ?? context?.direction)
     const block = record(direction.block)
     return <div className="rounded-lg border border-border bg-card p-3 mb-3 text-sm space-y-1">
-        <div className="flex justify-between gap-2"><span className="font-medium">{text(block.key, session.slot_key || session.activity_kind)}</span><Link className="underline text-primary" href={`/training?session=${session.id}`}>Training context</Link></div>
+        <div className="flex justify-between gap-2"><span className="font-medium">{text(block.key, session.slot_key || session.activity_kind)}</span><Link className="inline-flex min-h-11 items-center underline text-primary" href={`/training/manage?session=${session.id}`}>Session record</Link></div>
         <p>{text(snapshot.purpose, text(record(snapshot.slot).purpose, text(block.purpose)))}</p>
         <p className="text-xs text-muted-foreground break-all">Frozen revision {session.revision_id} · intent, not completed work</p>
         {context?.review?.review_due === true && <p className="text-warning">Review due — not automatic expiry.</p>}

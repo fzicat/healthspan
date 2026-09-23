@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useTrainingContext } from '@/components/TrainingContext'
 import { DEFAULT_ATHLETE_TIMEZONE } from '@/lib/training-planning/dates'
 import { useTheme } from '@/contexts/ThemeContext'
@@ -30,6 +31,7 @@ export default function SettingsPage() {
 
             <div className="space-y-4">
                 <section className="bg-card rounded-xl p-4 border border-border"><h2 className="font-medium">Athlete timezone</h2><p>{planning.context?.athlete_timezone ?? DEFAULT_ATHLETE_TIMEZONE}</p><p className="text-sm text-muted-foreground">{planning.context ? "Provisioned planning timezone. Travel does not relabel stored dates." : "Default logging timezone; planning configuration is not verified."} Timezone changes require explicit administrator migration.</p></section>
+                <Link href="/training/manage" className="inline-flex min-h-11 items-center text-sm text-muted-foreground underline">Training confirmations (advanced)</Link>
                 {/* Theme Toggle */}
                 <div className="bg-card rounded-xl p-4 border border-border">
                     <div className="flex items-center justify-between">

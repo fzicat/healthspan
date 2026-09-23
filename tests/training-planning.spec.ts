@@ -1,6 +1,7 @@
 // Execute: PLAYWRIGHT_BROWSERS_PATH=$PWD/.training-test/browsers node_modules/.bin/tsx tests/training-planning.spec.ts
 // Synthetic LOCAL PGlite browser integration. Not real Supabase/GoTrue validation.
 import { reviewBrowser } from './review-browser';
+import { simpleDashboard } from './simple-dashboard.spec';
 import { chromium, expect, type Page } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -40,20 +41,23 @@ async function main() {
     page = await context.newPage();
     page.on('pageerror',e => errors.push(e.message));
     await check('anonymous-middleware-redirect',async () => {
-      await page!.goto(`${appURL}/training`);
-      await expect(page!).toHaveURL(/\/login$/);
+      for (const path of ['/training','/training/manage']) {
+        await page!.goto(`${appURL}${path}`);
+        await expect(page!).toHaveURL(/\/login$/);
+      }
       await shot('00-login-redirect');
     });
     await context.addCookies(await server.cookies());
     await check('training-navigation',async () => {
-      await page!.goto(`${appURL}/training`);
-      await expect(page!.getByRole('heading',{name:'Training direction',exact:true})).toBeVisible();
+      await page!.goto(`${appURL}/training/manage`);
+      await expect(page!.getByRole('heading',{name:'Training confirmations',exact:true})).toBeVisible();
       await page!.getByRole('button',{name:'Toggle menu'}).click();
-      const nav = page!.getByRole('link',{name:'Training direction',exact:true}).first();
+      const nav = page!.getByRole('link',{name:'Training',exact:true}).first();
       await expect(nav).toHaveAttribute('href','/training');
       await shot('01-navigation');
       await nav.click();
       await expect(page!).toHaveURL(`${appURL}/training`);
+      await page!.goto(`${appURL}/training/manage`);
     });
     const routeOK = await check('training-context-render',async () => {
       await writeFile(resolve(evidenceDir,'initial-context.json'),JSON.stringify(await server!.rpc('get_training_context'),null,2));
@@ -149,7 +153,7 @@ async function main() {
         assert(cancelled.events.some(event => event.kind === 'cancel_session' && event.session_id === created.session_id));
         const review = (await server!.rpc('get_training_context')).review;
         if (review.review_due) await server!.mutate('record_training_decision', {kind:'bounded_continuation',review_event_ids:review.reasons.map((r: TrainingRecord)=>r.event_id),evidence:{summary:'Synthetic linked operation review'},reason:'No actual work; supportive decisions remain appropriate',revisit_on:server!.tomorrow});
-        await page!.goto(`${appURL}/training`);
+        await page!.goto(`${appURL}/training/manage`);
         await expect(page!.getByText(/Authority: active/i)).toBeVisible();
       }
     });
@@ -181,7 +185,7 @@ async function main() {
     });
     await check('supportive-cardio-bounds-and-numeric-payload',async () => {
       if(!activationOK) throw new Error('Blocked by activation failure');
-      await page!.goto(`${appURL}/training`);
+      await page!.goto(`${appURL}/training/manage`);
       await page!.getByText('Choose an activity within approved scope',{exact:true}).click();
       const intent = page!.locator('section').filter({has:page!.getByRole('heading',{name:'Record a dated intent',exact:true})});
       const activity = intent.getByLabel('Activity',{exact:true});
@@ -291,13 +295,14 @@ async function main() {
       assert.equal(saved.length,2); assert.equal(saved[0].weight,65); assert.equal(saved[0].reps,9); assert.equal(saved[0].rir,2); assert.equal(saved[0].training_session_id,null);
       await shot('07-logger-saved');
       await page!.goto(`${appURL}/training`);
-      if(routeOK) await expect(page!.getByText('1 actual logged sets · 0 actual cardio records')).toBeVisible();
+      await expect(page!.getByText('1 logged set',{exact:true})).toHaveCount(2);
       await shot(routeOK ? '08-today-actual-activity' : '08-planning-unavailable-after-save');
     });
     await check('mobile-training-layout',async () => {
       await page!.setViewportSize({width:390,height:844});
       await page!.goto(`${appURL}/training`);
-      await expect(page!.getByRole('heading',{name:'Appropriate activity today',exact:true})).toBeVisible();
+      await expect(page!.getByRole('heading',{name:'Where we’re going',exact:true})).toBeVisible();
+      await expect(page!.getByText('Next strength session',{exact:true})).toBeVisible();
       assert.equal(await page!.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,'Training overview must not overflow mobile width');
       await shot('09-mobile-training');
     });
@@ -322,18 +327,35 @@ async function main() {
       await page!.context().clearCookies(); await page!.context().addCookies(await server.cookies());
       return server;
     }, check, shot);
+    await page.close();
+    // Travel must not relabel athlete-local activity or date-only cardio records.
+    const dashboardContext = await browser.newContext({viewport:{width:1200,height:900},timezoneId:'Asia/Tokyo'});
+    await dashboardContext.route('**/*',route => { const u = new URL(route.request().url()); if(u.hostname === '127.0.0.1' || u.protocol === 'data:') return route.continue(); blocked.push(u.origin); return route.abort(); });
+    page = await dashboardContext.newPage();
+    page.on('pageerror',e => errors.push(e.message));
+    await simpleDashboard(page, async () => {
+      await page!.goto('about:blank');
+      await server!.close(); server=undefined;
+      server=await createLocalTrainingServer();
+      await page!.context().clearCookies(); await page!.context().addCookies(await server.cookies());
+      return server;
+    }, check, shot);
     await check('logger-without-migration',async () => {
       await writeFile(resolve(evidenceDir,'requests-before-no-migration.json'),JSON.stringify(server!.requests,null,2));
       await server!.close(); server=undefined;
       server=await createLocalTrainingServer({planning:false});
       await page!.context().clearCookies(); await page!.context().addCookies(await server.cookies());
-      await page!.goto(`${appURL}/training`); await expect(page!.getByText(/Training planning is not installed/)).toBeVisible();
+      await page!.goto(`${appURL}/training`); await expect(page!.getByText('Your plan is unavailable right now.',{exact:true})).toBeVisible();
       await page!.goto(`${appURL}/exercise/${server.exercise}`);
       await page!.locator('#weight').fill('55'); await page!.locator('#reps').fill('6');
       await page!.getByRole('button',{name:'Save Set',exact:true}).click();
       await expect(page!.getByText('Set saved! 💪',{exact:true})).toBeVisible();
       const row=await server!.admin(async db => (await db.query<{reps:number;weight:number}>('SELECT reps,weight FROM sets ORDER BY id DESC LIMIT 1')).rows[0]);
       assert.equal(row.reps,6); assert.equal(row.weight,55); await shot('10-unmigrated-logger');
+      await page!.goto(`${appURL}/training`);
+      await expect(page!.getByText('Your plan is unavailable right now.',{exact:true})).toBeVisible();
+      await expect(page!.getByText('1 logged set',{exact:true})).toBeVisible();
+      await shot('dashboard-without-migration');
     });
   } catch(e: unknown) { const error = e instanceof Error ? e : new Error(String(e)); results.push({name:'harness',status:'failed',error:error.stack}); console.error(e); }
   finally {
