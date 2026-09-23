@@ -141,6 +141,15 @@ Read the exact returned revision/occurrence through history and any workout thro
 report the saved outcome as unverified. Then fetch fresh context before another
 independent mutation.
 
+If the owner has explicitly cancelled an unperformed linked intent (including by a
+new revision activation), a fresh materialization may deliberately reference
+`replace_cancelled_session_id`. It reuses the same dated workout but creates a new
+occurrence under current approved scope. Do not retry a conflict with a different
+UUID or infer cancellation. You cannot cancel for the owner. Read back BOTH old
+frozen history and the new occurrence/workout. Actual work, completed history,
+uncancelled/freeform targets and stale evidence remain conflicts; no credit or logs
+are copied. The Training UI exposes the same explicit selection after cancellation.
+
 Legacy create/add/update/remove workout tools remain available for scoped edits. All
 four require fresh context, stable request ID and explicit `linked` or `freeform` mode
 for active **and paused** direction. Supply reason/revisit for linked deviations; SQL
@@ -170,7 +179,14 @@ in authenticated Healthspan, not mandatory new per-set inputs or guessed complia
 Unlogged work can be proposed with `kind: propose_report`, but Frank confirms it in
 Healthspan. Do not create sets to represent reports or add reported volume to logged
 volume. Later logs reconcile to the **same occurrence**, not a second exposure.
-Conflicting evidence stays visible. Do not pool dates implicitly; explicit continuations
+Conflicting evidence stays visible. The owner can confirm an exact proposal or
+explicitly correct it, including load classification. Use effective evidence, not
+all historical reports: superseded testimony no longer adds phantom load, but raw
+actual sets remain load even when nonqualifying or when `use_report` is selected.
+A complete-day confirmation of unlogged resistance resets spacing even without
+session detail; it supplies no anatomical classification or exposure credit.
+Logged primary cardio requires explicit owner record association, not a self-report
+substitute or an automatic same-date link. Do not pool dates implicitly; explicit continuations
 retain original dates/identity. Distinct real sessions can occur on one date, but a new
 UUID is not proof they were distinct.
 

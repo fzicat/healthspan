@@ -27,8 +27,49 @@ export async function withFixture(fn: (f: Fixture) => Promise<void>) {
   await assert.rejects(fetch(f.url), /fetch failed/, 'disposable listener closed');
 }
 
+export function modalityContent(f: Fixture, kind: 'cardio' | 'mobility', source = 'self_reported'): Json {
+  const content: Json = structuredClone(f.content);
+  content.sequence = [{ ...content.sequence[0], activity_kind: kind, load_tags: [kind], exercises: [], qualification: {
+    kind: kind === 'cardio' ? 'cardio_minutes' : 'reported_objective', anchors: [], require_work_set_confirmation: false,
+    ...(kind === 'cardio' ? { min_minutes: 20 } : { objective: 'unloaded movement' }),
+    admissible_sources: [source], queue_effect: 'advance', out_of_order: 'hold', continuation_days: 2,
+  } }];
+  return content;
+}
+
 // Keep the fixture helpers reusable by browser tests without registering node tests.
 if (process.argv[1]?.endsWith('review-regressions.spec.ts')) {
+  test('A10 authored out-of-order advance follows the completed slot through a complete cycle', async () => withFixture(async f => {
+    const content: Json = structuredClone(f.content);
+    content.sequence.push({ ...structuredClone(content.sequence[0]), key: 'gamma' });
+    for (const slot of content.sequence) slot.qualification.out_of_order = 'advance';
+    const rid = await activate(f, content);
+    const ids: string[] = [];
+    for (const [key, expected] of [['beta', 'gamma'], ['gamma', 'alpha'], ['alpha', 'beta']]) {
+      const sid = await attribute(f, rid, key, f.yesterday, ids); ids.push(sid);
+      await report(f, sid, { performed_on: f.yesterday, work: [{ exercise_id: f.exercise, sets: 1, reps: 5, rir: 2 }] });
+      assert.equal((await f.rpc('get_training_context')).queue.next_slot_key, expected);
+    }
+    assert.equal((await f.rpc('get_training_context')).queue.qualifying_exposures, 3);
+  }));
+
+  test('A14 read synchronizes a reached deviation revisit once, and bounded handling does not expire authority', async () => withFixture(async f => {
+    const rid = await activate(f); const intent = await materialize(f);
+    // Seed retained history whose revisit has now arrived, rather than change the
+    // host clock or pretend a future revisit passed during this short test.
+    const event = (await sql(f, "SELECT training_event('deviation',$1,$2,$3::jsonb,'owner:fixture') id", [rid, intent.session_id, JSON.stringify({ reason: 'Historical synthetic deviation', revisit_on: f.today })]))[0].id;
+    let c = await f.rpc('get_training_context');
+    const reached = c.review.open_concerns.filter((v: Json) => v.payload.deviation_event_id === event);
+    assert.equal(reached.length, 1); assert.equal(reached[0].payload.code, 'deviation_revisit');
+    assert.equal(c.review.review_due, true); assert.equal(c.authority.lifecycle, 'active');
+    await assert.rejects(materialize(f, { activity_kind: 'rest', slot_key: undefined }), /REVIEW_HANDLING_REQUIRED/);
+    await decision(f, { kind: 'bounded_continuation', review_event_ids: c.review.reasons.map((v: Json) => v.event_id), evidence: { summary: 'Review reached date, keep bounds' }, revisit_on: f.tomorrow });
+    c = await f.rpc('get_training_context');
+    assert.equal(c.review.open_concerns.filter((v: Json) => v.payload.deviation_event_id === event).length, 1);
+    assert.equal(c.review.review_due, true); assert.equal(c.authority.lifecycle, 'active');
+    await materialize(f, { activity_kind: 'rest', slot_key: undefined });
+  }));
+
   test('R1 effective day confirmation resets spacing; correction never overrides real sets', async () => withFixture(async f => {
     await activate(f);
     const old = (await sql(f, 'SELECT ($1::date-3)::text d', [f.today]))[0].d;
@@ -50,6 +91,18 @@ if (process.argv[1]?.endsWith('review-regressions.spec.ts')) {
     c = await f.rpc('get_training_context');
     assert.equal(c.activity_eligibility.strength.eligible, false);
     assert.equal((await sql(f, "SELECT * FROM training_load_dates('America/Montreal') WHERE source='day_confirmation'")).length, 0);
+  }));
+
+  test('R1 unknown regional day load blocks only dependent rules across revision changes', async () => withFixture(async f => {
+    await activate(f);
+    await decision(f, { kind: 'confirm_day', date: f.yesterday, non_strength: false, complete: true });
+    const next: Json = structuredClone(f.content); next.block.key = 'regional';
+    next.recovery_spacing_rules = [{ id: 'regional', candidate_tags: ['resistance'], preceding_tags: ['upper'], predicate: 'min_calendar_days', min_days: 2, require_day_confirmation: false }];
+    await activate(f, next);
+    const c = await f.rpc('get_training_context');
+    assert(c.activity_eligibility.strength.reasons.includes('LOAD_CLASSIFICATION_REQUIRED'));
+    assert.equal(c.activity_eligibility.rest.eligible, true);
+    assert.equal(c.queue.qualifying_exposures, 0);
   }));
 
   test('R5 latest corrected report removes phantom work but retains history and nonqualifying actual load', async () => withFixture(async f => {
@@ -87,6 +140,9 @@ if (process.argv[1]?.endsWith('review-regressions.spec.ts')) {
     await decision(f, { kind: 'resolve_report', session_id: sid, resolution: 'use_logs' });
     loads = await sql(f, "SELECT * FROM training_load_dates('America/Montreal')");
     assert(loads.some(l => l.source === 'set')); assert(!loads.some(l => l.source === 'report'));
+    await decision(f, { kind: 'resolve_report', session_id: sid, resolution: 'use_report' });
+    assert((await sql(f, "SELECT * FROM training_load_dates('America/Montreal')")).some(l => l.source === 'set'), 'use_report must not discard independently recorded sets');
+    await decision(f, { kind: 'resolve_report', session_id: sid, resolution: 'use_logs' });
     // Raw edits invalidate that resolution, even though qualification isn't the filter.
     await sql(f, 'UPDATE sets SET reps=2 WHERE training_session_id=$1', [sid]);
     loads = await sql(f, "SELECT * FROM training_load_dates('America/Montreal')");
@@ -133,6 +189,22 @@ if (process.argv[1]?.endsWith('review-regressions.spec.ts')) {
     assert.deepEqual((await f.rpc('get_training_history', { session_id: old.session_id })).sessions[0].snapshot, before.sessions[0].snapshot);
     const after = await f.rpc('get_training_context'); assert.equal(after.sessions.length, 2); assert.equal(after.queue.qualifying_exposures, 0); assert.equal(after.queue.next_slot_key, 'alpha');
     await assert.rejects(materialize(f, { replace_cancelled_session_id: old.session_id }), /WORKOUT_CONFLICT|PENDING_SESSION_CONFLICT/);
+  }));
+
+  test('R4 no-spacing plan still refuses actual work, freeform workout and foreign/date targets', async () => withFixture(async f => {
+    const content: Json = structuredClone(f.content); content.recovery_spacing_rules = [];
+    await activate(f, content); const old = await materialize(f);
+    await assert.rejects(materialize(f, { replace_cancelled_session_id: old.session_id }), /PENDING_SESSION_CONFLICT|WORKOUT_CONFLICT/);
+    await decision(f, { kind: 'cancel_session', session_id: old.session_id });
+    await assert.rejects(materialize(f, { target_date: f.tomorrow, replace_cancelled_session_id: old.session_id }), /WORKOUT_CONFLICT/);
+    await sql(f, 'INSERT INTO workouts(date) VALUES($1)', [f.tomorrow]);
+    await assert.rejects(materialize(f, { target_date: f.tomorrow }), /WORKOUT_CONFLICT/);
+    await assert.rejects(materialize(f, { replace_cancelled_session_id: randomUUID() }), /WORKOUT_CONFLICT/);
+    const before = await sql(f, 'SELECT * FROM workouts_exercises WHERE workout_id=$1', [old.workout_id]);
+    await sql(f, "INSERT INTO sets(exercise_id,reps,training_session_id,logged_at) VALUES($1,1,$2,($3::date+time '12:00') AT TIME ZONE 'America/Montreal')", [f.exercise, old.session_id, f.today]);
+    await assert.rejects(materialize(f, { replace_cancelled_session_id: old.session_id }), /REISSUE_ACTUAL_WORK_CONFLICT/);
+    assert.deepEqual(await sql(f, 'SELECT * FROM workouts_exercises WHERE workout_id=$1', [old.workout_id]), before);
+    assert.equal((await f.rpc('get_training_context')).sessions.length, 1);
   }));
 
   test('R4 activation-cancelled phase can reissue; actual work or freeform/uncancelled intent cannot be overwritten', async () => withFixture(async f => {

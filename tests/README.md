@@ -10,7 +10,7 @@ npm run lint
 npm --prefix mcp-server run typecheck
 ```
 
-`test:training` runs calendar unit tests, four disposable SQL/runbook suites, MCP receipt/contract tests, real-SQL public MCP suites and native PostgreSQL concurrency/security tests. Results mix assertions and test cases: report each runner separately, not a misleading combined test total. No production credentials or `.env` files are consumed by these runners. See `support/NATIVE-POSTGRES.md` for the native server's loopback/cleanup isolation.
+`test:training` runs calendar unit tests, the Smith R1–R5/A10/A14 regression suite, four disposable SQL/runbook suites, MCP receipt/contract tests, real-SQL public MCP suites and native PostgreSQL concurrency/security tests. Results mix assertions and test cases: report each runner separately, not a misleading combined test total. No production credentials or `.env` files are consumed by these runners. See `support/NATIVE-POSTGRES.md` for the native server's loopback/cleanup isolation.
 
 For browser verification, first use a clean isolated checkout containing no real `.env*` files. `env -i` alone does NOT prevent Next from reading dotenv files from disk. The build below intentionally points only at the synthetic loopback adapter:
 
@@ -43,5 +43,14 @@ env -i PATH="$PATH" HOME="$PWD/.training-test/evidence/browser" \
 `LD_LIBRARY_PATH`/`FONTCONFIG_FILE` are needed on this minimal Arch environment. Missing browser libraries were downloaded as Arch packages and extracted **locally**, without package installation, to the evidence directory: nspr, nss, at-spi2-core, libxcomposite, libxdamage, libxrandr, libxkbcommon, libxi, libxtst, plus ttf-dejavu. Systems with those browser dependencies/fonts installed can omit these two variables. Fontconfig caches also stay in the evidence directory.
 
 Evidence: `results.json`, `requests.json` (no tokens), `app.log`, exact context/history JSON, failure DOM text, and PNG screenshots under `.training-test/evidence/browser`. Screenshots are captures, not a claim of visual review. Failed prerequisites remain failed; logger checks still execute independently. Scenario dates derive from actual SQL athlete-local `today`: the recovery scenario attributes a qualifying occurrence to yesterday and tests today's supportive rest vs the retained pending resistance slot.
+
+The browser harness also runs `review-browser.ts` using a fresh in-memory store
+per correction scenario: exact/corrected cardio proposals, explicit mobility load,
+report correction and queue repair, logged-cardio association and duplicate refusal,
+work/effort/quality/continuation and distinct sessions, day testimony, cancel/reissue,
+reached revisit, and copy/repeat safety. `tests/review-regressions.spec.ts` supplies
+synthetic setup helpers, not fabricated responses. Native reissue races use real
+separate backends and observed lock barriers. Committed human-readable logs have
+trailing line whitespace normalized; substantive output/counts are unchanged.
 
 Scope: synthetic LOCAL integration only, **not Supabase/GoTrue/PostgREST validation**. HMAC session keys and synthetic session state are generated in memory and never written. The middleware is unmodified and must redirect an absent session. REST supports only the exercised tables/operators; unsupported requests fail rather than fabricate data. Exports in `support/local-training-server.ts` can support a later local MCP protocol harness.

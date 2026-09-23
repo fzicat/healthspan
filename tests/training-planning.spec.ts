@@ -1,5 +1,6 @@
 // Execute: PLAYWRIGHT_BROWSERS_PATH=$PWD/.training-test/browsers node_modules/.bin/tsx tests/training-planning.spec.ts
 // Synthetic LOCAL PGlite browser integration. Not real Supabase/GoTrue validation.
+import { reviewBrowser } from './review-browser';
 import { chromium, expect, type Page } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -17,6 +18,7 @@ async function main() {
   let app: Awaited<ReturnType<typeof startIsolatedApp>> | undefined;
   let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
   let page: Page | undefined;
+  let cleanupVerified = false;
   async function shot(name: string) { if(page) await page.screenshot({path:resolve(evidenceDir,`${name}.png`),fullPage:true}); }
   async function check(name: string, fn: () => Promise<void>) {
     try { await fn(); results.push({name,status:'passed'}); console.log(`PASS ${name}`); return true; }
@@ -312,6 +314,14 @@ async function main() {
         assert.equal(row.reps,10); assert.equal(row.training_session_id,null); await shot('09-outage-logger');
       } finally { await page!.unroute(outage); }
     });
+    await page.setViewportSize({width:1200,height:900});
+    await reviewBrowser(page, async () => {
+      await page!.goto('about:blank');
+      await server!.close(); server=undefined;
+      server=await createLocalTrainingServer();
+      await page!.context().clearCookies(); await page!.context().addCookies(await server.cookies());
+      return server;
+    }, check, shot);
     await check('logger-without-migration',async () => {
       await writeFile(resolve(evidenceDir,'requests-before-no-migration.json'),JSON.stringify(server!.requests,null,2));
       await server!.close(); server=undefined;
@@ -330,7 +340,12 @@ async function main() {
     await browser?.close();
     await app?.close();
     if(server) { await writeFile(resolve(evidenceDir,'requests.json'),JSON.stringify(server.requests,null,2)); await server.close(); }
-    const report = { label:'Synthetic LOCAL PGlite + test-only HTTP adapter; not Supabase validation', results, pageErrors:errors, blockedExternalOrigins:blocked, migrations:server?.migrations, screenshots:'Captured, not visually inspected' };
+    try {
+      await assert.rejects(fetch(appURL), /fetch failed/);
+      await assert.rejects(fetch('http://127.0.0.1:54399'), /fetch failed/);
+      cleanupVerified = true;
+    } catch (e) { results.push({name:'disposable-listener-cleanup',status:'failed',error:String(e)}); }
+    const report = { cleanupVerified, label:'Synthetic LOCAL PGlite + test-only HTTP adapter; not Supabase validation', results, pageErrors:errors, blockedExternalOrigins:blocked, migrations:server?.migrations, screenshots:'Captured, not visually inspected' };
     await writeFile(resolve(evidenceDir,'results.json'),JSON.stringify(report,null,2));
     console.log(JSON.stringify(report,null,2));
     if(results.some(r => r.status === 'failed') || errors.length) process.exitCode = 1;

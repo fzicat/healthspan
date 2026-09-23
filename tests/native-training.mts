@@ -216,6 +216,23 @@ try {
     return { ...session, set };
   }
 
+  for (const sameKey of [true, false]) await test(`R4 overlapping cancelled reissue (same key=${sameKey}) preserves one new occurrence and original snapshot`, async () => {
+    await fixture();
+    const original = await mutate(a, 'materialize_training_session', strength());
+    const frozen = await scalar(admin, 'SELECT snapshot FROM training_session_contexts WHERE id=$1', [original.session_id]);
+    await mutate(a, 'record_training_decision', { kind: 'cancel_session', session_id: original.session_id, reason: 'Synthetic owner cancellation' });
+    const c = await context(a), before = await counts();
+    const p = request(c, { ...strength(), replace_cancelled_session_id: original.session_id });
+    const q = sameKey ? p : { ...p, request_id: randomUUID() };
+    const out = await race('materialize_training_session', p, 'materialize_training_session', q);
+    if (sameKey) assert.deepEqual(must(out[0]), must(out[1])); else oneConflict(out);
+    const after = await counts();
+    assert.equal(after.sessions - before.sessions, 1); assert.equal(after.workouts, before.workouts); assert.equal(after.exercises, before.exercises);
+    assert.deepEqual(await scalar(admin, 'SELECT snapshot FROM training_session_contexts WHERE id=$1', [original.session_id]), frozen);
+    assert.equal((await context(a)).queue.qualifying_exposures, 0);
+    assert.equal(await scalar(admin, 'SELECT count(*)::int FROM sets'), 0);
+  });
+
   await test('A20/A32 simultaneous identical request: one receipt/session/workout/prescription', async () => {
     await fixture(); const before = await counts(); const p = request(await context(a), strength());
     const out = await race('materialize_training_session', p, 'materialize_training_session', p);

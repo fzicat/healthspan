@@ -118,7 +118,7 @@ export async function createLocalTrainingServer(options: { port?: number; planni
         const join = relation?.[1];
         if (join && !(join === 'exercises' && ['sets','workouts_exercises'].includes(table) || join === 'workouts' && table === 'workouts_exercises')) throw new Error('Unsupported relationship');
         for (const [key, value] of url.searchParams) {
-          if (['select','order','limit','offset'].includes(key)) continue;
+          if (['select','order','limit','offset'].includes(key) || req.method === 'POST' && key === 'columns') continue;
           const [op,...rest] = value.split('.'); const val = rest.join('.');
           const column = key.startsWith('exercises.') && join ? `e.${ident(key.slice(10))}` : `t.${ident(key)}`;
           if (op === 'in') where.push(`${column} IN (${val.slice(1,-1).split(',').map(v => bind(v)).join(',')})`);
@@ -127,7 +127,12 @@ export async function createLocalTrainingServer(options: { port?: number; planni
         }
         const clause = where.length ? ` WHERE ${where.join(' AND ')}` : '';
         if (req.method === 'POST') {
-          const keys = Object.keys(body); return query(`INSERT INTO public.${ident(table)} (${keys.map(ident).join(',')}) VALUES (${keys.map(k => bind(body[k])).join(',')}) RETURNING *`,params);
+          const records = Array.isArray(body) ? body : [body];
+          const keys = Object.keys(records[0] ?? {});
+          if (!keys.length || records.some(row => JSON.stringify(Object.keys(row).sort()) !== JSON.stringify([...keys].sort()))) throw new Error('Unsupported mixed insert columns');
+          const columns = url.searchParams.get('columns');
+          if (columns && JSON.stringify(columns.split(',').map(k => k.replace(/^"|"$/g, '')).sort()) !== JSON.stringify([...keys].sort())) throw new Error('Unsupported insert columns');
+          return query(`INSERT INTO public.${ident(table)} (${keys.map(ident).join(',')}) VALUES ${records.map(row => `(${keys.map(k => bind(row[k])).join(',')})`).join(',')} RETURNING *`,params);
         }
         if (req.method === 'PATCH') return query(`UPDATE public.${ident(table)} t SET ${Object.keys(body).map(k => `${ident(k)}=${bind(body[k])}`).join(',')}${clause} RETURNING *`,params);
         if (req.method === 'DELETE') return query(`DELETE FROM public.${ident(table)} t${clause} RETURNING *`,params);

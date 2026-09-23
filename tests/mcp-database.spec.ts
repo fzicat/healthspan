@@ -150,6 +150,49 @@ test('fresh public discovery and real SQL schema, immutable coach proposal, owne
   });
 });
 
+test('R4 public MCP discovers explicit reissue, requires owner cancellation, then replays and reads immutable history', async () => {
+  await withDatabase(async (f, client) => {
+    await activate(f, client);
+    const schema = (await client.listTools()).tools.find(t => t.name === 'materialize_training_session')!.inputSchema.properties as Json;
+    assert.ok(schema.replace_cancelled_session_id);
+    let c = await call(client, 'get_training_context');
+    const args = { target_date: f.today, activity_kind: 'strength', slot_key: 'alpha', reason: 'Synthetic public reissue test', revisit_on: f.tomorrow };
+    const old = await call(client, 'materialize_training_session', { ...args, ...guard(c) });
+    await assert.rejects(call(client, 'record_training_decision', { ...guard(await call(client, 'get_training_context')), kind: 'cancel_session', session_id: old.session_id, reason: 'coach cannot cancel' }), /cancel_session|Invalid|invalid/);
+    await ownerMutation(f, 'record_training_decision', { kind: 'cancel_session', session_id: old.session_id, reason: 'Synthetic owner cancellation' });
+    c = await call(client, 'get_training_context');
+    const reissue = { ...args, replace_cancelled_session_id: old.session_id, ...guard(c) };
+    const result = await call(client, 'materialize_training_session', reissue);
+    assert.equal(result.workout_id, old.workout_id); assert.notEqual(result.session_id, old.session_id);
+    assert.deepEqual(await call(client, 'materialize_training_session', reissue), result);
+    const history = await call(client, 'get_training_history');
+    assert.equal(history.sessions.length, 2);
+    assert(history.events.some((e: Json) => e.payload.replaces_cancelled_session_id === old.session_id));
+    c = await call(client, 'get_training_context'); assert.equal(c.queue.qualifying_exposures, 0);
+    assert.equal(c.queue.next_slot_key, 'alpha');
+  });
+});
+
+test('R1/R5 public MCP reads effective actual evidence and refuses prescriptions, not independent recovery intent', async () => {
+  await withDatabase(async (f, client) => {
+    const { proposed } = await activate(f, client);
+    await ownerMutation(f, 'record_training_decision', { kind: 'confirm_day', date: f.yesterday, non_strength: false, complete: true, reason: 'Synthetic unlogged actual resistance' });
+    let c = await call(client, 'get_training_context');
+    assert.equal(c.activity_eligibility.strength.eligible, false);
+    await assert.rejects(call(client, 'materialize_training_session', { ...guard(c), target_date: f.today, activity_kind: 'strength', slot_key: 'alpha', reason: 'Cannot ignore unlogged strength', revisit_on: f.tomorrow }), /AUTHORITY_REQUIRED/);
+    assert(c.activity_eligibility.strength.reasons.includes('RECOVERY_SPACING_NOT_MET'));
+    await ownerMutation(f, 'record_training_decision', { kind: 'confirm_day', date: f.yesterday, non_strength: true, complete: true, reason: 'Owner correction' });
+    const occurrence = await ownerMutation(f, 'record_training_decision', { kind: 'attribute_occurrence', revision_id: proposed.revision_id, slot_key: 'alpha', performed_on: f.yesterday, set_ids: [], duplicate_checked: true, reason: 'Synthetic actual occurrence' });
+    for (const work of [[{ exercise_id: f.exercise, sets: 1, reps: 5, rir: 2 }], []]) {
+      await ownerMutation(f, 'record_training_decision', { kind: 'confirm_report', session_id: occurrence.session_id, report: { performed_on: f.yesterday, work }, duplicate_checked: true, reason: 'Synthetic corrected report' });
+    }
+    await ownerMutation(f, 'record_training_decision', { kind: 'queue_correction', next_slot_key: 'alpha', evidence: { summary: 'Removed erroneous work' }, reason: 'Owner queue correction' });
+    c = await call(client, 'get_training_context'); assert.equal(c.activity_eligibility.strength.eligible, true); assert.equal(c.queue.qualifying_exposures, 0);
+    await call(client, 'materialize_training_session', { ...guard(c), target_date: f.today, activity_kind: 'rest', reason: 'Synthetic independent recovery choice', revisit_on: f.tomorrow });
+    assert.equal((await call(client, 'get_training_context')).queue.next_slot_key, 'alpha');
+  });
+});
+
 for (const lifecycle of ['active', 'paused']) {
   test(`all four real SQL legacy routes require fresh explicit freeform during ${lifecycle}; actual evidence invalidates`, async () => {
     await withDatabase(async (f, client) => {

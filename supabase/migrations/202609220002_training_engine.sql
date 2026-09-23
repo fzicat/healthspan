@@ -166,8 +166,8 @@ BEGIN
  ELSIF q->>'kind'='cardio_minutes' THEN
   SELECT coalesce(sum(duration_minutes),0) INTO n FROM public.cardio_sessions cs WHERE NOT cs.is_deleted AND coalesce(cl->'cardio_session_ids','[]') @> to_jsonb(ARRAY[cs.id]) AND (cs.date=s.planned_date OR (coalesce(cl->'continuation_dates','[]')?cs.date::text AND cs.date BETWEEN s.planned_date AND s.planned_date+(q->>'continuation_days')::int));
   -- An actual candidate is not an association. Ask the owner to identify it.
-  IF n=0 AND q->'admissible_sources'?'logged' AND EXISTS(
-   SELECT 1 FROM public.cardio_sessions cs WHERE NOT cs.is_deleted
+  IF n<(q->>'min_minutes')::int AND q->'admissible_sources'?'logged' AND EXISTS(
+   SELECT 1 FROM public.cardio_sessions cs WHERE NOT cs.is_deleted AND NOT(coalesce(cl->'cardio_session_ids','[]') @> jsonb_build_array(cs.id))
     AND (cs.date=s.planned_date OR coalesce(cl->'continuation_dates','[]')?cs.date::text)
   ) THEN missing:=missing||'"cardio_association"'::jsonb; END IF;
   logged_ok:=logged_ok AND n>=(q->>'min_minutes')::int;
@@ -182,6 +182,9 @@ BEGIN
   IF has_report AND (NOT public.training_tags(report->'load_tags') OR NOT(coalesce(report->'load_tags','[]') @> s.load_tags)) THEN
    report_ok:=false; missing:=missing||'"reported_load_tags"'::jsonb;
   END IF;
+ END IF;
+ IF report IS NOT NULL AND (report->>'performed_on')::date<>s.planned_date AND NOT(coalesce(cl->'continuation_dates','[]')?(report->>'performed_on')) THEN
+  report_ok:=false; missing:=missing||'"explicit_continuation"'::jsonb;
  END IF;
  IF q?'required_quality' THEN
   IF cl->>'quality' IS DISTINCT FROM q->>'required_quality' THEN logged_ok:=false; IF has_logs THEN missing:=missing||'"required_quality_evidence"'::jsonb; END IF; END IF;

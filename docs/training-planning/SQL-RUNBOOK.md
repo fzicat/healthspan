@@ -19,6 +19,45 @@ These describe the current repository SQL, not the deployed project. No addition
 
 No live project, GoTrue-issued JWT or PostgREST validation has been performed. Those checks, backup/restore rehearsal, service retirement and deployment remain blocked on separate authorization; local SQL results do not waive them.
 
+## Unshipped Smith-review correction definitions
+
+The R1–R5 correction pass edits the **unapplied** 002/003 definitions coherently.
+Do not treat the earlier candidate hashes as a deployed migration history. Apply
+001 → 002 → 003 → 004 once, using one reviewed final commit and the matching
+`evidence/native-postgres.json` hashes. No additional production patch, bootstrap
+rerun or manual database write is required by these fixes. If any earlier candidate
+was applied in a separately authorized sandbox, recreate that disposable sandbox;
+if unexpectedly applied live, STOP for an explicitly reviewed forward migration.
+
+RPC SQL signatures remain `(p_input jsonb DEFAULT '{}')`; grants are unchanged.
+New optional JSON fields and operator-visible procedures:
+
+- Owner `confirm_report`: use either `proposal_event_id` for byte-equivalent JSONB
+  content or `corrected_proposal_event_id` for a deliberate different report linked
+  to the same occurrence's proposal. Never both. No work-array or load-tag defaults
+  are silently inserted by the UI. Mobility objectives need confirmed actual tags.
+- `materialize_training_session`: `replace_cancelled_session_id` explicitly reissues
+  the latest owner-cancelled unperformed occurrence on the same dated workout.
+  Cancellation may also come from exact revision activation. Reissue creates a new
+  frozen occurrence, preserves old intent and all logs/associations, and replaces
+  only unperformed prescription rows. It does not grant cancellation authority to
+  MCP, bypass current spacing, overwrite freeform/uncancelled/completed work or
+  transfer exposure. UI: cancel under Manage linked intent, then choose the exact
+  cancelled occurrence under Training → Record a dated intent. MCP: fresh target
+  context, same optional field, stable request ID, exact history/workout readback.
+- Latest complete day testimony of resistance resets spacing without qualifying.
+  Latest effective report and evidence-scoped resolution govern report load. Older
+  positive reports remain history, not phantom work; independent raw sets/cardio
+  always retain actual load. Date corrections require an explicit frozen-rule-
+  bounded continuation (otherwise use distinct corrected occurrence testimony).
+- Primary logged cardio candidates expose owner association with readable records.
+  No same-date auto-link or fabricated report/log. Duplicate association is refused.
+
+The updated MCP remains migration-first and fail-closed. These changes add no
+fallback on missing or arbitrary RPC errors. They are not GoTrue/PostgREST or
+fresh-Dozer coaching validation. See the implementation report for actual local
+SQL, native overlap, public protocol and browser evidence.
+
 ## 1. Authorization, backup and maintenance checklist
 
 - Frank verifies the intended project and administrator role in his own Supabase UI; an agent must not discover production credentials or resources.
