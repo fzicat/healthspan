@@ -1,5 +1,6 @@
 import { Set, SetInsert, SetUpdate, SetWithExercise, Exercise } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
+import { localDayBounds } from '@/lib/dates'
 
 // Get sets for an exercise with pagination
 export async function getSetsForExercise(
@@ -139,8 +140,7 @@ export async function deleteSet(id: number): Promise<void> {
 // Get all sets logged on a specific date with their exercises
 export async function getSetsForDate(date: string): Promise<SetWithExercise[]> {
     const supabase = createClient()
-    const startOfDay = `${date}T00:00:00.000Z`
-    const endOfDay = `${date}T23:59:59.999Z`
+    const { start, end } = localDayBounds(date)
 
     const { data, error } = await supabase
         .from('sets')
@@ -150,8 +150,8 @@ export async function getSetsForDate(date: string): Promise<SetWithExercise[]> {
     `)
         .eq('is_deleted', false)
         .eq('exercises.is_deleted', false)
-        .gte('logged_at', startOfDay)
-        .lte('logged_at', endOfDay)
+        .gte('logged_at', start)
+        .lt('logged_at', end)
         .order('logged_at', { ascending: true })
 
     if (error) throw error

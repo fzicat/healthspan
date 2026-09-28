@@ -90,7 +90,7 @@ server.registerTool(
   {
     title: "Get workout by date",
     description:
-      "Full detail for one workout day: the planned exercises (from workouts_exercises) plus every set logged that day.",
+      "Full detail for one day: the planned workout (name, note, exercises) if any, plus every set and cardio session logged that local day — including unplanned work.",
     inputSchema: {
       date: z
         .string()

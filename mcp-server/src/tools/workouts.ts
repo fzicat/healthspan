@@ -1,5 +1,6 @@
 import { getSupabase } from "../supabase.ts";
 import { getCardioSessionsByDate } from "./cardio.ts";
+import { localDayBounds } from "../dates.ts";
 
 // --- Write guardrails ---------------------------------------------------
 // The MCP server uses the service-role key (RLS is bypassed), so the
@@ -192,7 +193,7 @@ export async function removeWorkoutExercise(args: {
   return { status: "deleted" as const, workout_exercise_id: args.workout_exercise_id };
 }
 
-type WorkoutRow = { id: number; date: string };
+type WorkoutRow = { id: number; date: string; name?: string | null; note?: string | null };
 type ExerciseRow = {
   id: number;
   name: string;
@@ -203,6 +204,7 @@ type WorkoutExerciseJoined = {
   id?: number;
   sort_order: number;
   details: string | null;
+  note?: string | null;
   exercises: ExerciseRow;
 };
 type WorkoutWithExercises = WorkoutRow & {
@@ -269,37 +271,29 @@ export async function getWorkoutByDate(args: { date: string }) {
 
   const { data: workout, error: wErr } = await supabase
     .from("workouts")
-    .select("id, date")
+    .select("id, date, name, note")
     .eq("date", args.date)
     .maybeSingle();
 
   if (wErr) throw wErr;
-  if (!workout) {
-    if (cardio_sessions.length === 0) return null;
-    return {
-      id: null,
-      date: args.date,
-      planned_exercises: [],
-      logged_sets: [],
-      cardio_sessions,
-    };
+  const w = workout as unknown as WorkoutRow | null;
+
+  // Sets are read even without a planned workout: unplanned lifting is real work.
+  let planned: unknown[] = [];
+  if (w) {
+    const { data, error: pErr } = await supabase
+      .from("workouts_exercises")
+      .select(
+        "id, sort_order, details, note, exercises!inner(id, name, metrics, is_deleted)"
+      )
+      .eq("workout_id", w.id)
+      .eq("exercises.is_deleted", false)
+      .order("sort_order", { ascending: true });
+    if (pErr) throw pErr;
+    planned = data ?? [];
   }
 
-  const w = workout as unknown as WorkoutRow;
-
-  const { data: planned, error: pErr } = await supabase
-    .from("workouts_exercises")
-    .select(
-      "id, sort_order, details, exercises!inner(id, name, metrics, is_deleted)"
-    )
-    .eq("workout_id", w.id)
-    .eq("exercises.is_deleted", false)
-    .order("sort_order", { ascending: true });
-
-  if (pErr) throw pErr;
-
-  const startOfDay = `${args.date}T00:00:00.000Z`;
-  const endOfDay = `${args.date}T23:59:59.999Z`;
+  const { start, end } = localDayBounds(args.date);
 
   const { data: sets, error: sErr } = await supabase
     .from("sets")
@@ -308,16 +302,19 @@ export async function getWorkoutByDate(args: { date: string }) {
     )
     .eq("is_deleted", false)
     .eq("exercises.is_deleted", false)
-    .gte("logged_at", startOfDay)
-    .lte("logged_at", endOfDay)
+    .gte("logged_at", start)
+    .lt("logged_at", end)
     .order("logged_at", { ascending: true });
 
   if (sErr) throw sErr;
+  if (!w && !sets?.length && cardio_sessions.length === 0) return null;
 
   return {
-    id: w.id,
-    date: w.date,
-    planned_exercises: (planned ?? []) as unknown as WorkoutExerciseJoined[],
+    id: w?.id ?? null,
+    date: args.date,
+    name: w?.name ?? null,
+    note: w?.note ?? null,
+    planned_exercises: planned as unknown as WorkoutExerciseJoined[],
     logged_sets: (sets ?? []) as unknown as SetJoined[],
     cardio_sessions,
   };
@@ -338,8 +335,8 @@ export async function getSummary(args: { from?: string; to?: string }) {
     .from("sets")
     .select("id", { count: "exact", head: true })
     .eq("is_deleted", false);
-  if (args.from) setQ = setQ.gte("logged_at", `${args.from}T00:00:00.000Z`);
-  if (args.to) setQ = setQ.lte("logged_at", `${args.to}T23:59:59.999Z`);
+  if (args.from) setQ = setQ.gte("logged_at", localDayBounds(args.from).start);
+  if (args.to) setQ = setQ.lt("logged_at", localDayBounds(args.to).end);
   const { count: set_count, error: sErr } = await setQ;
   if (sErr) throw sErr;
 
@@ -349,9 +346,9 @@ export async function getSummary(args: { from?: string; to?: string }) {
     .eq("is_deleted", false)
     .eq("exercises.is_deleted", false);
   if (args.from)
-    perExerciseQ = perExerciseQ.gte("logged_at", `${args.from}T00:00:00.000Z`);
+    perExerciseQ = perExerciseQ.gte("logged_at", localDayBounds(args.from).start);
   if (args.to)
-    perExerciseQ = perExerciseQ.lte("logged_at", `${args.to}T23:59:59.999Z`);
+    perExerciseQ = perExerciseQ.lt("logged_at", localDayBounds(args.to).end);
   const { data: rows, error: eErr } = await perExerciseQ;
   if (eErr) throw eErr;
 

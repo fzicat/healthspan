@@ -183,7 +183,9 @@ export async function reorderWorkoutExercises(
             .eq('workout_id', workoutId)
     )
 
-    await Promise.all(updates)
+    const results = await Promise.all(updates)
+    const failed = results.find(result => result.error)
+    if (failed?.error) throw failed.error
 }
 
 // Repeat a day: copy exercises from another date to today's workout

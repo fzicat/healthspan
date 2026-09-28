@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { localDayBounds } from '@/lib/dates'
 import {
     buildWorkoutReportDays,
     type CardioSessionSummaryInput,
@@ -41,6 +42,7 @@ type HrvLogRow = {
 async function getStrengthSetsForRange(from: string, to: string): Promise<StrengthSetSummaryInput[]> {
     const supabase = createClient()
     const rows: StrengthSetRow[] = []
+    const bounds = localDayBounds(from, to)
 
     for (let offset = 0; ; offset += PAGE_SIZE) {
         const { data, error } = await supabase
@@ -49,8 +51,8 @@ async function getStrengthSetsForRange(from: string, to: string): Promise<Streng
             .eq('is_deleted', false)
             .eq('exercises.is_deleted', false)
             .eq('exercises.category', 'strength')
-            .gte('logged_at', `${from}T00:00:00.000Z`)
-            .lte('logged_at', `${to}T23:59:59.999Z`)
+            .gte('logged_at', bounds.start)
+            .lt('logged_at', bounds.end)
             .order('logged_at', { ascending: true })
             .order('id', { ascending: true })
             .range(offset, offset + PAGE_SIZE - 1)

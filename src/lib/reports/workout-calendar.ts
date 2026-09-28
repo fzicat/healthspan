@@ -135,7 +135,8 @@ export function buildWorkoutReportDays(
     const cardioByDate = new Map<string, CardioSessionSummaryInput[]>()
 
     for (const set of strengthSets) {
-        const date = set.loggedAt.slice(0, 10)
+        // Bucket by local calendar day, matching the local-midnight query bounds.
+        const date = new Date(set.loggedAt).toLocaleDateString('en-CA')
         const existing = strengthByDate.get(date) ?? []
         existing.push(set)
         strengthByDate.set(date, existing)
