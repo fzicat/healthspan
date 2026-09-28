@@ -1,13 +1,16 @@
 import { Fragment, type ReactNode } from 'react'
 
 // Minimal renderer for coach-written markdown: headings, bullet/numbered
-// lists, **bold** and paragraphs. Anything else renders as plain text.
+// lists, **bold**, _italic_ / *italic* and paragraphs. Anything else is plain text.
+// Italic needs a word boundary outside the markers so snake_case stays literal.
+const INLINE = /(\*\*[^*]+\*\*|(?<![\w*])\*[^*\s][^*]*\*(?![\w*])|(?<!\w)_[^_\s][^_]*_(?!\w))/g
+
 function inline(text: string): ReactNode {
-    return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
-        part.startsWith('**') && part.endsWith('**') && part.length > 4
-            ? <strong key={i}>{part.slice(2, -2)}</strong>
-            : <Fragment key={i}>{part}</Fragment>
-    )
+    return text.split(INLINE).map((part, i) => {
+        if (part.length > 4 && part.startsWith('**') && part.endsWith('**')) return <strong key={i}>{part.slice(2, -2)}</strong>
+        if (part.length > 2 && ((part.startsWith('_') && part.endsWith('_')) || (part.startsWith('*') && part.endsWith('*')))) return <em key={i}>{part.slice(1, -1)}</em>
+        return <Fragment key={i}>{part}</Fragment>
+    })
 }
 
 export function Markdown({ text }: { text: string }) {
