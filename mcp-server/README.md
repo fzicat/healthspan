@@ -9,6 +9,8 @@ data; **writes are deliberately narrow** so the agent can plan ahead without rew
 
 - It may **create exercises** (duplicate-guarded — see below) and **create/edit workouts and
   their planned exercises for today or any future date**.
+- It may **read and write training phases** — the record of past, current and planned
+  phases that keeps long-term direction across coaching sessions.
 - It **cannot** edit past-dated workouts, and there is **no** tool to edit or delete exercises,
   so anything already logged stays intact.
 
@@ -85,7 +87,7 @@ Same pattern — point at the `src/index.ts` entrypoint and let it speak MCP ove
 |---|---|
 | `search_exercises({ query?, limit? })` | Resolve an exercise name to an `exercise_id`. |
 | `list_recent_workouts({ limit?, before_date? })` | Workout days with their planned exercise list. |
-| `get_workout_by_date({ date })` | Planned exercises + all sets logged on one day. |
+| `get_workout_by_date({ date })` | Planned workout (if any) + all sets and cardio logged that local day. |
 | `get_exercise_history({ exercise_id, limit?, from?, to? })` | Sets for one exercise, most recent first. |
 | `list_sets({ exercise_id?, from?, to?, limit? })` | Generic set query across exercises. |
 | `get_summary({ from?, to? })` | Workout / set counts and per-exercise volume in a date range. |
@@ -105,6 +107,26 @@ Same pattern — point at the `src/index.ts` entrypoint and let it speak MCP ove
 
 All tools return JSON. Soft-deleted rows (`is_deleted = true`) are excluded everywhere.
 Write tools enforce a **today-or-later** date window; past-dated workouts are rejected.
+
+### Training phases
+
+A phase is one block of training (e.g. "Rolling PPL A/B", six weeks). Healthspan keeps which
+phases were done, which one is current, and which are planned, so a coach in a fresh session can
+read the direction, decide, and record the decision. The web app shows them read-only at `/training`.
+
+| Tool | Purpose |
+|---|---|
+| `get_training_phases()` | `{ current, planned[], completed[] }` — completed newest first, with outcomes. |
+| `create_training_phase({ name, status?, start_date?, end_date?, goal?, plan?, outcome?, set_current_completed? })` | Create a phase (default `planned`). |
+| `update_training_phase({ id, ...any field, set_current_completed? })` | Edit a phase: refine the plan, set dates, complete it, or promote it. |
+| `delete_training_phase({ id })` | Delete a phase that is still `planned`. |
+
+Fields: `goal` = why/priorities/success criteria; `plan` = markdown (split, sessions,
+exercises, progression, cardio, recovery rules); `outcome` = what happened, written when the
+phase ends. Only one phase can be `current`: start a new one with `status: "current"` plus
+`set_current_completed: true`, which marks the previous current phase `completed` in the same
+call. Phases do not link to sets or workouts — "what we did in a phase" is the logs between its
+dates.
 
 ### Daily-log field reference
 

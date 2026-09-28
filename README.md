@@ -10,6 +10,7 @@ No social features — just fast logging with automatic recall of your last perf
 - **Set Logging** — Weight, reps, time, distance, and RIR (Reps In Reserve) inputs with auto-prefill from your last logged set
 - **Exercise Library** — Create and manage exercises with configurable metrics (weight, reps, time, distance, unilateral, dual implements)
 - **Scheduled Workouts** — Plan workouts for any date, reorder exercises via drag-and-drop, copy workouts between dates
+- **Training Phases** — Read-only view of past, current and planned training phases, written by the AI coach over MCP
 - **Repeat a Day** — Copy a previous day's exercises into today's workout with auto-generated set summaries
 - **Rest Timer** — Floating stopwatch for timing rest between sets
 - **Swipe-to-Delete** — Swipe set history rows to soft-delete
@@ -107,6 +108,7 @@ src/
 │   ├── scheduled/            # Scheduled workouts list + editor
 │   │   ├── page.tsx
 │   │   └── [date]/page.tsx
+│   ├── training/page.tsx     # Training phases (read-only)
 │   ├── settings/page.tsx     # Theme toggle + logout
 │   ├── auth/callback/route.ts
 │   └── globals.css           # Gruvbox theme variables
@@ -139,6 +141,7 @@ Four tables power the app:
 - **sets** — Individual logged sets with nullable metrics and RIR, linked to an exercise
 - **workouts** — A date (unique) representing a workout day
 - **workouts_exercises** — Junction table linking workouts to exercises with sort order and freeform details text
+- **training_phases** — Past, current (at most one) and planned training phases: name, dates, goal, markdown plan, outcome. Written by the AI coach via MCP; read-only in the app
 
 ## Scripts
 

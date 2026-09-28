@@ -173,3 +173,37 @@ LANGUAGE sql STABLE AS $$
     ORDER BY similarity DESC
     LIMIT p_limit;
 $$;
+-- One row per training phase. Exactly one phase may be `current`; the AI coach
+-- (via MCP) owns the content, the app only displays it.
+CREATE TABLE IF NOT EXISTS public.training_phases (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL CHECK (btrim(name) <> ''),
+    status TEXT NOT NULL DEFAULT 'planned' CHECK (status IN ('planned', 'current', 'completed')),
+    start_date DATE,
+    end_date DATE,
+    goal TEXT,
+    plan TEXT,
+    outcome TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT training_phases_dates_ordered CHECK (end_date IS NULL OR start_date IS NULL OR end_date >= start_date)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS training_phases_one_current ON public.training_phases ((true)) WHERE status = 'current';
+CREATE OR REPLACE FUNCTION public.training_phases_set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS training_phases_updated_at ON public.training_phases;
+CREATE TRIGGER training_phases_updated_at
+    BEFORE UPDATE ON public.training_phases
+    FOR EACH ROW EXECUTE FUNCTION public.training_phases_set_updated_at();
+ALTER TABLE public.training_phases ENABLE ROW LEVEL SECURITY;
+-- The app is read-only for phases; writes go through the service-role MCP server.
+DROP POLICY IF EXISTS "Allow authenticated users to read training_phases" ON public.training_phases;
+CREATE POLICY "Allow authenticated users to read training_phases" ON public.training_phases FOR SELECT TO authenticated USING (true);
+GRANT SELECT ON public.training_phases TO authenticated;
+GRANT ALL ON public.training_phases TO service_role;
+GRANT USAGE, SELECT ON SEQUENCE public.training_phases_id_seq TO service_role;

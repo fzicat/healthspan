@@ -17,6 +17,8 @@ export type ExerciseMetrics = {
 
 export type ExerciseCategory = 'strength' | 'cardio'
 
+export type TrainingPhaseStatus = 'planned' | 'current' | 'completed'
+
 export interface Database {
     public: {
         Tables: {
@@ -253,6 +255,44 @@ export interface Database {
                     updated_at?: string
                 }
             }
+            training_phases: {
+                Row: {
+                    id: number
+                    name: string
+                    status: TrainingPhaseStatus
+                    start_date: string | null
+                    end_date: string | null
+                    goal: string | null
+                    plan: string | null
+                    outcome: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: number
+                    name: string
+                    status?: TrainingPhaseStatus
+                    start_date?: string | null
+                    end_date?: string | null
+                    goal?: string | null
+                    plan?: string | null
+                    outcome?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: number
+                    name?: string
+                    status?: TrainingPhaseStatus
+                    start_date?: string | null
+                    end_date?: string | null
+                    goal?: string | null
+                    plan?: string | null
+                    outcome?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+            }
         }
         Views: {
             [_ in never]: never
@@ -306,6 +346,8 @@ export type CardioSessionUpdate = Database['public']['Tables']['cardio_sessions'
 export type BreathworkSession = Database['public']['Tables']['breathwork_sessions']['Row']
 export type BreathworkSessionInsert = Database['public']['Tables']['breathwork_sessions']['Insert']
 export type BreathworkSessionUpdate = Database['public']['Tables']['breathwork_sessions']['Update']
+
+export type TrainingPhase = Database['public']['Tables']['training_phases']['Row']
 
 export const BREATHWORK_TYPES = ['Resonance Breathing'] as const
 export type BreathworkType = typeof BREATHWORK_TYPES[number]

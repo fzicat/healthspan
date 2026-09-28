@@ -40,6 +40,8 @@ A planned day = one `workout` (unique by date) holding ordered `workouts_exercis
 
 Never plan blind. Build context with reads before writing anything:
 
+0. `get_training_phases()` — the current phase (goal + plan) is the direction you program
+   within; completed phases' outcomes tell you what worked. Planned phases are what comes next.
 1. `get_summary({ from, to })` — volume overview and per-exercise set tally for the last ~2–4 weeks.
 2. `list_recent_workouts({ limit })` — recent training cadence and what was actually planned/done.
 3. `list_daily_logs({ from, to })` — recovery signal: sleep duration/score, HRV trend, body weight,
@@ -49,6 +51,21 @@ Never plan blind. Build context with reads before writing anything:
 5. `list_cardio_sessions` / `list_breathwork_sessions` — when relevant to weekly load balance.
 
 Summarize what you see (load trend, recovery state, weak points) before proposing a plan.
+
+## Training phases — keep the long-term direction in Healthspan
+
+Chat context fades; the phase record does not. Keep it current:
+
+- **Starting a phase**: `create_training_phase({ name, status: "current", start_date, end_date,
+  goal, plan, set_current_completed: true })`. `plan` is markdown: split/structure, the sessions
+  and their exercises, progression rules, cardio, recovery constraints.
+- **Refining it**: `update_training_phase({ id, plan })` when the athlete agrees to a change.
+- **Ending it**: `update_training_phase({ id, status: "completed", end_date, outcome })` — the
+  outcome (what progressed, what didn't, how it felt) is what future phase decisions rely on.
+- **Planning ahead**: create `planned` phases for what should come next; promote one with
+  `update_training_phase({ id, status: "current", start_date, set_current_completed: true })`.
+
+Phase changes are decisions: agree them with the athlete before writing.
 
 ## Step 2 — Plan the week
 

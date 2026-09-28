@@ -24,6 +24,12 @@ import {
 import { getDailyLog, listDailyLogs } from "./tools/daily-logs.ts";
 import { listCardioSessions } from "./tools/cardio.ts";
 import { listBreathworkSessions } from "./tools/breathwork.ts";
+import {
+  getTrainingPhases,
+  createTrainingPhase,
+  updateTrainingPhase,
+  deleteTrainingPhase,
+} from "./tools/training-phases.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 loadDotenv({ path: resolve(__dirname, "../../.env.local") });
@@ -399,6 +405,112 @@ server.registerTool(
     },
   },
   async (args) => json(await removeWorkoutExercise(args))
+);
+
+// --- Training phases --------------------------------------------------------
+// Durable record of the training phases: past (completed, with outcome), the
+// single current one, and planned ones. The coach reads it to decide, and
+// writes it to record decisions. No history constraints: phases are editable.
+
+const isoDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD");
+const phaseStatus = z.enum(["planned", "current", "completed"]);
+const phaseFields = {
+  start_date: isoDate
+    .nullable()
+    .optional()
+    .describe("Start date (YYYY-MM-DD): actual for current/completed, intended for planned."),
+  end_date: isoDate
+    .nullable()
+    .optional()
+    .describe("End date (YYYY-MM-DD): actual for completed, expected for current/planned."),
+  goal: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Why this phase exists: priorities and what success looks like."),
+  plan: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      "Markdown description of the phase: structure/split, sessions and exercises, " +
+        "progression, cardio, recovery rules and constraints."
+    ),
+  outcome: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("What actually happened and lessons learned. Fill in when completing a phase."),
+  set_current_completed: z
+    .boolean()
+    .optional()
+    .describe(
+      "With status 'current': mark the existing current phase 'completed' in the same call. " +
+        "Otherwise a second current phase is rejected."
+    ),
+};
+
+server.registerTool(
+  "get_training_phases",
+  {
+    title: "Get training phases",
+    description:
+      "Read the training phases: the single current phase, planned (future) phases in start order, " +
+      "and completed phases (most recent first) with their outcomes. " +
+      "Read this before planning workouts or deciding on a phase change.",
+    inputSchema: {},
+  },
+  async () => json(await getTrainingPhases())
+);
+
+server.registerTool(
+  "create_training_phase",
+  {
+    title: "Create training phase",
+    description:
+      "Create a training phase. Default status is 'planned'. Only one phase can be 'current'; " +
+      "to start a new phase, pass status 'current' with set_current_completed: true " +
+      "(then record the finished phase's outcome with update_training_phase).",
+    inputSchema: {
+      name: z.string().min(1).describe("Short name, e.g. 'Rolling PPL A/B'."),
+      status: phaseStatus.optional(),
+      ...phaseFields,
+    },
+  },
+  async (args) => json(await createTrainingPhase(args))
+);
+
+server.registerTool(
+  "update_training_phase",
+  {
+    title: "Update training phase",
+    description:
+      "Update any field of a training phase by id (only the fields you pass change). " +
+      "Use it to refine the plan, set dates, complete a phase (status 'completed' + outcome), " +
+      "or promote a planned phase (status 'current' + set_current_completed: true).",
+    inputSchema: {
+      id: z.number().int().positive(),
+      name: z.string().min(1).optional(),
+      status: phaseStatus.optional(),
+      ...phaseFields,
+    },
+  },
+  async (args) => json(await updateTrainingPhase(args))
+);
+
+server.registerTool(
+  "delete_training_phase",
+  {
+    title: "Delete planned training phase",
+    description:
+      "Delete a phase that is still 'planned'. Current and completed phases are history and cannot be deleted.",
+    inputSchema: {
+      id: z.number().int().positive(),
+    },
+  },
+  async (args) => json(await deleteTrainingPhase(args))
 );
 
 const transport = new StdioServerTransport();
