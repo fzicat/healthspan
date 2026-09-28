@@ -14,22 +14,19 @@ import {
   repeatDay
 } from '@/lib/api/workouts'
 import { getExercises, searchExercises } from '@/lib/api/exercises'
-import { TrainingContext, useTrainingContext } from '@/components/TrainingContext'
-import { TrainingLinkedEditor } from '@/components/TrainingLinkedEditor'
-import { TrainingEvidence } from '@/components/TrainingEvidence'
-import { sessionForWorkout } from '@/lib/api/training-planning'
-import { athleteDate, DEFAULT_ATHLETE_TIMEZONE } from '@/lib/training-planning/dates'
 import { useToast } from '@/contexts/ToastContext'
 
 function getTodayDate(): string {
-  return athleteDate()
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 export default function TodaysWorkoutPage() {
   const [exercises, setExercises] = useState<WorkoutExerciseWithExercise[]>([])
   const [workoutId, setWorkoutId] = useState<number | null>(null)
-  const planning = useTrainingContext()
-  const session = sessionForWorkout(planning.context, workoutId)
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
@@ -39,16 +36,16 @@ export default function TodaysWorkoutPage() {
 
   const loadWorkout = useCallback(async () => {
     try {
-      const today = planning.context?.today ?? getTodayDate()
+      const today = getTodayDate()
       const { workout, exercises } = await getWorkoutForDate(today)
       setWorkoutId(workout?.id ?? null)
       setExercises(exercises)
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Failed to load workout', 'error')
+    } catch {
+      showToast('Failed to load workout', 'error')
     } finally {
       setIsLoading(false)
     }
-  }, [showToast, planning.context?.today])
+  }, [showToast])
 
   useEffect(() => {
     loadWorkout()
@@ -66,8 +63,8 @@ export default function TodaysWorkoutPage() {
       await loadWorkout()
       setShowAddModal(false)
       showToast(`Added ${exercise.name}`, 'success')
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Failed to add exercise', 'error')
+    } catch {
+      showToast('Failed to add exercise', 'error')
     }
   }
 
@@ -75,8 +72,8 @@ export default function TodaysWorkoutPage() {
     try {
       await removeExerciseFromWorkout(workoutExerciseId)
       await loadWorkout()
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Failed to remove exercise', 'error')
+    } catch {
+      showToast('Failed to remove exercise', 'error')
     }
   }
 
@@ -87,8 +84,8 @@ export default function TodaysWorkoutPage() {
       await loadWorkout()
       setReplacingId(null)
       showToast(`Replaced with ${exercise.name}`, 'success')
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Failed to replace exercise', 'error')
+    } catch {
+      showToast('Failed to replace exercise', 'error')
     }
   }
 
@@ -96,8 +93,8 @@ export default function TodaysWorkoutPage() {
     try {
       await updateWorkoutExerciseDetails(workoutExerciseId, details)
       await loadWorkout()
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Failed to update details', 'error')
+    } catch {
+      showToast('Failed to update details', 'error')
     }
   }
 
@@ -114,8 +111,8 @@ export default function TodaysWorkoutPage() {
         workoutId,
         newExercises.map(e => e.id)
       )
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Failed to reorder', 'error')
+    } catch {
+      showToast('Failed to reorder', 'error')
       await loadWorkout()
     }
   }
@@ -141,7 +138,6 @@ export default function TodaysWorkoutPage() {
           <h1 className="text-2xl font-bold">Today&apos;s Workout</h1>
           <p className="text-sm text-muted-foreground">
             {new Date().toLocaleDateString('en-US', {
-              timeZone: DEFAULT_ATHLETE_TIMEZONE,
               weekday: 'long',
               month: 'short',
               day: 'numeric'
@@ -183,10 +179,7 @@ export default function TodaysWorkoutPage() {
         </div>
       </div>
 
-      <TrainingContext context={planning.context} error={planning.error} loading={planning.loading} session={session} />
-      {session && planning.context && <TrainingLinkedEditor context={planning.context} session={session} isOwner={planning.isOwner} refresh={async () => { await loadWorkout(); await planning.refresh() }} />}
-  {session && planning.context && <details className="mb-4"><summary className="min-h-11 py-3 cursor-pointer text-sm">Reports & missing session evidence</summary><TrainingEvidence context={planning.context} isOwner={planning.isOwner} refresh={planning.refresh} onlySessionId={session.id} /></details>}
-  {/* Exercise List */}
+      {/* Exercise List */}
       {isLoading ? (
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
@@ -208,7 +201,6 @@ export default function TodaysWorkoutPage() {
             <ExerciseItem
               key={we.id}
               workoutExercise={we}
-            sessionId={session?.id}
               isEditing={isEditing}
               index={index}
               totalCount={exercises.length}
@@ -265,7 +257,6 @@ export default function TodaysWorkoutPage() {
 }
 
 interface ExerciseItemProps {
-  sessionId?: string
   workoutExercise: WorkoutExerciseWithExercise
   isEditing: boolean
   index: number
@@ -278,7 +269,6 @@ interface ExerciseItemProps {
 }
 
 function ExerciseItem({
-  sessionId,
   workoutExercise,
   isEditing,
   index,
@@ -394,7 +384,7 @@ function ExerciseItem({
 
   return (
     <li>
-      <Link href={`/exercise/${workoutExercise.exercises.id}${sessionId ? `?session=${sessionId}` : ''}`}>
+      <Link href={`/exercise/${workoutExercise.exercises.id}`}>
         {content}
       </Link>
     </li>

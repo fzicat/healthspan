@@ -1,5 +1,3 @@
-import { athleteDate } from '../training-planning/dates'
-
 export type WorkoutEntryKind = 'strength' | 'cardio'
 
 export type WorkoutCalendarEntry = {
@@ -137,7 +135,7 @@ export function buildWorkoutReportDays(
     const cardioByDate = new Map<string, CardioSessionSummaryInput[]>()
 
     for (const set of strengthSets) {
-        const date = athleteDate(new Date(set.loggedAt))
+        const date = set.loggedAt.slice(0, 10)
         const existing = strengthByDate.get(date) ?? []
         existing.push(set)
         strengthByDate.set(date, existing)

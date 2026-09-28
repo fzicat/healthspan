@@ -1,14 +1,5 @@
 # Healthspan
 
-## Training dashboard (feature branch)
-
-`/training` is a simple dashboard: what we did, where we are, and where we're going. Coaching and decisions happen with Dozer outside Healthspan. Recent ordinary logs remain visible independently of planning. See `docs/training-planning/SIMPLE-DASHBOARD-DELIVERY.md` for the product correction and local verification. Existing authenticated confirmations remain at `/training/manage` through Settings; external conversation alone cannot activate a plan.
-
-The earlier `docs/training-planning/IMPLEMENTATION-REPORT.md` records engine/security evidence, not the current dashboard design. The dashboard correction needs no new SQL or database project and does not require repeating applied runbook steps. Existing planning still depends on the four additive migrations and explicit owner/timezone provisioning. Never rerun `supabase/schema.sql` on an existing database. For an installation that has not yet provisioned planning, review `docs/training-planning/SQL-RUNBOOK.md`. No live athlete plan is included.
-
-Tests: `npm ci --ignore-scripts`, `npm --prefix mcp-server ci --ignore-scripts`, then `npm run test:training`, `npm run lint`, and `npm --prefix mcp-server run typecheck`. Browser/build isolation instructions are in `tests/README.md`; all fixtures are local/synthetic. Set `NEXT_PUBLIC_ATHLETE_TIMEZONE` at build time and `HSPAN_ATHLETE_TIMEZONE` for MCP to the provisioned zone (defaults: America/Montreal).
-
-
 A mobile-first web app for logging healthspan data: strength training today, with cardio, sleep, HRV, and nutrition planned next.
 
 No social features — just fast logging with automatic recall of your last performance and clean data access for an AI fitness coach.
