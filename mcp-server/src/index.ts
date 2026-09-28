@@ -412,16 +412,16 @@ server.registerTool(
 // single current one, and planned ones. The coach reads it to decide, and
 // writes it to record decisions. No history constraints: phases are editable.
 
-const isoDate = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD");
+// A fresh instance per field: a shared zod instance becomes a JSON-schema $ref,
+// which zod-to-json-schema emits to a non-existent path for nullable fields.
+const isoDate = () => z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD");
 const phaseStatus = z.enum(["planned", "current", "completed"]);
 const phaseFields = {
-  start_date: isoDate
+  start_date: isoDate()
     .nullable()
     .optional()
     .describe("Start date (YYYY-MM-DD): actual for current/completed, intended for planned."),
-  end_date: isoDate
+  end_date: isoDate()
     .nullable()
     .optional()
     .describe("End date (YYYY-MM-DD): actual for completed, expected for current/planned."),
