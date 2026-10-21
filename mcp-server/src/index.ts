@@ -321,6 +321,28 @@ server.registerTool(
   async (args) => json(await createExercise(args))
 );
 
+// Per-exercise plan is split in two: a short Rx shown on the workout list and
+// exercise page, and coaching detail kept behind a toggle in the app.
+const RX_MAX_LENGTH = 80;
+const RX_SCHEMA = z
+  .string()
+  .max(RX_MAX_LENGTH)
+  .nullable()
+  .optional()
+  .describe(
+    `Rx: the day's prescription only, short and scannable (max ${RX_MAX_LENGTH} chars). ` +
+      "Sets x reps, plus optional load, RIR and rest. E.g. '3x5 @ 225-245 lb, 3 RIR, rest 3 min'. " +
+      "Everything else goes in note."
+  );
+const COACHING_SCHEMA = z
+  .string()
+  .nullable()
+  .optional()
+  .describe(
+    "Coaching details, hidden behind a toggle in the app: technique cues, warm-up ramps, " +
+      "load caps/fallbacks, rationale vs. recent sets, reduced-session alternative. Markdown allowed."
+  );
+
 server.registerTool(
   "create_or_update_workout",
   {
@@ -356,16 +378,8 @@ server.registerTool(
     inputSchema: {
       date: z.string().describe("ISO date (YYYY-MM-DD), today or later."),
       exercise_id: z.number().int().positive(),
-      details: z
-        .string()
-        .nullable()
-        .optional()
-        .describe("Prescription, e.g. '3x8 @ 135lb'."),
-      note: z
-        .string()
-        .nullable()
-        .optional()
-        .describe("Freeform per-exercise note / coaching cue."),
+      details: RX_SCHEMA,
+      note: COACHING_SCHEMA,
       sort_order: z
         .number()
         .int()
@@ -381,12 +395,12 @@ server.registerTool(
   {
     title: "Update planned exercise",
     description:
-      "Update the details, note, or sort_order of a planned exercise (by workout_exercise_id). " +
+      "Update the Rx (details), coaching note, or sort_order of a planned exercise (by workout_exercise_id). " +
       "Allowed only when the owning workout is dated today or later.",
     inputSchema: {
       workout_exercise_id: z.number().int().positive(),
-      details: z.string().nullable().optional(),
-      note: z.string().nullable().optional(),
+      details: RX_SCHEMA,
+      note: COACHING_SCHEMA,
       sort_order: z.number().int().optional(),
     },
   },

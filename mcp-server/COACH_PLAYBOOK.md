@@ -31,8 +31,12 @@ A planned day = one `workout` (unique by date) holding ordered `workouts_exercis
 |---|---|---|
 | `workout.name` | The day's label / split | `"Push A"`, `"Lower — Squat focus"`, `"Rest"` |
 | `workout.note` | The day's intent / focus / deload flag | `"Deload week, keep RIR ≥ 3"` |
-| `workouts_exercises.details` | The **prescription** | `"4x5 @ 80% / RIR 2"` |
-| `workouts_exercises.note` | A **technique cue / coaching comment** | `"Pause 1s at chest, controlled eccentric"` |
+| `workouts_exercises.details` | The **Rx**: short prescription, ≤ 80 chars (enforced). Shown on the workout list and exercise page. | `"3x5 @ 225-245 lb, 3 RIR, rest 3 min"` |
+| `workouts_exercises.note` | **Coaching details**, hidden behind a toggle on the exercise page. Markdown allowed. | `"Pause 1s at chest, controlled eccentric. Ramps: 95x5, 135x3. Use 175 if reserve drops."` |
+
+Keep the Rx to what the athlete needs mid-set: sets × reps, and optionally load, RIR, rest.
+Everything else (cues, warm-up ramps, caps and fallbacks, rationale vs. recent sets, the
+reduced-session alternative) belongs in `note`.
 
 ---
 
@@ -79,8 +83,8 @@ For each training day in the range:
 2. **Resolve every exercise id** with `search_exercises` before adding it. Reuse existing
    exercises whenever the movement already exists (see dedup rules below).
 3. **Add exercises in order**: `add_workout_exercise({ date, exercise_id, details, note })`.
-   - `details` = the prescription (sets × reps @ load/%/RIR).
-   - `note` = the coaching cue.
+   - `details` = the Rx (sets × reps, optional load/RIR/rest), ≤ 80 chars.
+   - `note` = the coaching details (cues, ramps, fallbacks, rationale).
    - `sort_order` is auto-appended; pass it explicitly only to insert at a position.
 4. **Rest days**: either leave the date with no workout, or create one named `"Rest"` /
    `"Active recovery"` with guidance in the note.
@@ -133,7 +137,8 @@ create_or_update_workout({ date: "<wed>", name: "Push A",
 
 search_exercises({ query: "bench press" })            # -> id 12 (Barbell Bench Press)
 add_workout_exercise({ date: "<wed>", exercise_id: 12,
-  details: "1x5 @ RIR1, 2x5 @ RIR2", note: "Pause 1s, leg drive" })
+  details: "1x5 @ RIR1, 2x5 @ RIR2, rest 3 min",
+  note: "Pause 1s, leg drive. Ramps: bar x8, 95x5, 135x3. Drop 10 lb if bar speed slows." })
 
 search_exercises({ query: "overhead press" })         # not found
 find_similar_exercises({ query: "overhead press" })   # -> "OHP"? inspect; none match

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Exercise, Set } from '@/types/database'
 import { getExercise } from '@/lib/api/exercises'
-import { getExerciseDetailsForDate, getAdjacentExercises } from '@/lib/api/workouts'
+import { getExercisePlanForDate, getAdjacentExercises } from '@/lib/api/workouts'
 import {
     getSetsForExercise,
     getLastSetForExercise,
@@ -14,6 +14,7 @@ import {
     deleteSet
 } from '@/lib/api/sets'
 import { useToast } from '@/contexts/ToastContext'
+import { Markdown } from '@/components/Markdown'
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -33,7 +34,8 @@ export default function ExercisePage({ params }: PageProps) {
     const [isSaving, setIsSaving] = useState(false)
     const [showStopwatch, setShowStopwatch] = useState(false)
     const [editingSet, setEditingSet] = useState<Set | null>(null)
-    const [exerciseDetails, setExerciseDetails] = useState<string | null>(null)
+    const [plan, setPlan] = useState<{ details: string | null; note: string | null } | null>(null)
+    const [showCoaching, setShowCoaching] = useState(false)
     const [adjacentExercises, setAdjacentExercises] = useState<{
         prev: { id: number; name: string } | null
         next: { id: number; name: string } | null
@@ -71,11 +73,10 @@ export default function ExercisePage({ params }: PageProps) {
             setSets(setsData)
             setHasMore(more)
 
-            // Load today's details from workout
+            // Load today's Rx and coaching note from workout
             const today = new Date()
             const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-            const details = await getExerciseDetailsForDate(exerciseId, todayStr)
-            setExerciseDetails(details)
+            setPlan(await getExercisePlanForDate(exerciseId, todayStr))
 
             // Load adjacent exercises in today's workout
             const adjacent = await getAdjacentExercises(exerciseId, todayStr)
@@ -200,12 +201,34 @@ export default function ExercisePage({ params }: PageProps) {
                         <polyline points="15 18 9 12 15 6" />
                     </svg>
                 </button>
-                <h1 className="text-2xl font-bold">{exercise.name}</h1>
+                <h1 className="text-2xl font-bold flex-1">{exercise.name}</h1>
+                {plan?.note && (
+                    <button
+                        onClick={() => setShowCoaching(v => !v)}
+                        className={`p-2 rounded-lg transition-colors ${showCoaching ? 'bg-muted' : 'hover:bg-muted'}`}
+                        aria-label={showCoaching ? 'Hide coaching notes' : 'Show coaching notes'}
+                        aria-expanded={showCoaching}
+                        title="Coaching notes"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="16" x2="12" y2="12" />
+                            <line x1="12" y1="8" x2="12.01" y2="8" />
+                        </svg>
+                    </button>
+                )}
             </div>
 
-            {/* Exercise Details for today */}
-            {exerciseDetails && (
-                <p className="text-sm text-muted-foreground ml-10 -mt-1 mb-1">{exerciseDetails}</p>
+            {/* Today's Rx */}
+            {plan?.details && (
+                <p className="text-sm text-muted-foreground ml-10 -mt-1 mb-1">{plan.details}</p>
+            )}
+
+            {/* Coaching notes, hidden until requested */}
+            {showCoaching && plan?.note && (
+                <div className="text-sm text-muted-foreground bg-muted rounded-lg p-3 mb-3 space-y-2">
+                    <Markdown text={plan.note} />
+                </div>
             )}
 
             {/* Prev/Next Exercise Navigation */}

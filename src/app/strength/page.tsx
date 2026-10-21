@@ -316,7 +316,7 @@ function ExerciseItem({
             />
           ) : (
             <p
-              className="text-sm text-muted-foreground mt-0.5 cursor-pointer"
+              className={`text-sm text-muted-foreground mt-0.5 cursor-pointer ${isEditing ? '' : 'line-clamp-2'}`}
               onClick={() => isEditing && setEditingDetails(true)}
             >
               {workoutExercise.details || (isEditing ? 'Tap to add details...' : '')}

@@ -101,7 +101,7 @@ Same pattern — point at the `src/index.ts` entrypoint and let it speak MCP ove
 | `find_similar_exercises({ query, threshold?, limit? })` | Fuzzy-search existing exercises before creating one (dedup). |
 | `create_exercise({ name, category?, metrics?, confirm_create? })` | Create an exercise; refuses on possible duplicates unless `confirm_create`. |
 | `create_or_update_workout({ date, name?, note? })` | Create a workout for a date and/or set its name/note. |
-| `add_workout_exercise({ date, exercise_id, details?, note?, sort_order? })` | Append a planned exercise (creates the workout if needed). |
+| `add_workout_exercise({ date, exercise_id, details?, note?, sort_order? })` | Append a planned exercise (creates the workout if needed). `details` is the short Rx (≤ 80 chars); `note` holds coaching details. |
 | `update_workout_exercise({ workout_exercise_id, details?, note?, sort_order? })` | Edit a planned exercise. |
 | `remove_workout_exercise({ workout_exercise_id })` | Remove a planned exercise. |
 

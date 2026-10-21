@@ -264,11 +264,11 @@ export async function getAllWorkouts(): Promise<WorkoutWithPreview[]> {
     })
 }
 
-// Get exercise details for a specific date (from workouts_exercises)
-export async function getExerciseDetailsForDate(
+// Get the planned Rx (details) and coaching note for an exercise on a date (from workouts_exercises)
+export async function getExercisePlanForDate(
     exerciseId: number,
     date: string
-): Promise<string | null> {
+): Promise<{ details: string | null; note: string | null } | null> {
     const supabase = createClient()
 
     const { data: workout } = await supabase
@@ -281,12 +281,12 @@ export async function getExerciseDetailsForDate(
 
     const { data } = await supabase
         .from('workouts_exercises')
-        .select('details')
+        .select('details, note')
         .eq('workout_id', workout.id)
         .eq('exercise_id', exerciseId)
         .single()
 
-    return data?.details ?? null
+    return data ? { details: data.details ?? null, note: data.note ?? null } : null
 }
 
 // Get adjacent exercises in today's workout plan
